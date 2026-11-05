@@ -1,0 +1,26 @@
+# Arquivos locais, credenciais e IDEs
+.env
+.env.*
+!.env.example
+*.local.*
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Artefatos específicos da área
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+*.iml
