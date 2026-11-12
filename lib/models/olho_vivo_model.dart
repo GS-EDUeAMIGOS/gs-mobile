@@ -1,6 +1,6 @@
-/// Camada: Models (Domínio / DTOs da SPTrans Olho Vivo)
-/// Responsabilidade Única: Mapear o retorno dos endpoints `/api/linhas`, `/api/linhas/{codigo}/veiculos`
-/// e `/api/paradas` que utilizam as chaves oficiais da SPTrans (`cl`, `lt`, `tp`, `ts`, `vs`, `p`, `a`, etc.).
+// Camada: Models (Domínio / DTOs da SPTrans Olho Vivo)
+// Responsabilidade Única: Mapear o retorno dos endpoints `/api/linhas`, `/api/linhas/{codigo}/veiculos`
+// e `/api/paradas` que utilizam as chaves oficiais da SPTrans (`cl`, `lt`, `tp`, `ts`, `vs`, `p`, `a`, etc.).
 
 class LinhaResumoModel {
   final int codigoLinha;
