@@ -1,6 +1,8 @@
-/// Camada: Models (Domínio / DTOs de Ocorrências Cidadãs)
-/// Responsabilidade Única: Espelhar os Enums (`TipoOcorrencia`, `StatusOcorrencia`, `NivelGravidade`)
-/// e a classe `OcorrenciaDTO` do backend Java, fazendo a tradução entre JSON e objetos Dart.
+// ignore_for_file: constant_identifier_names
+
+// Camada: Models (Domínio / DTOs de Ocorrências Cidadãs)
+// Responsabilidade Única: Espelhar os Enums (`TipoOcorrencia`, `StatusOcorrencia`, `NivelGravidade`)
+// e a classe `OcorrenciaDTO` do backend Java, fazendo a tradução entre JSON e objetos Dart.
 
 enum TipoOcorrencia {
   ACESSIBILIDADE('Acessibilidade Geral'),
