@@ -128,7 +128,95 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Seção de Ações Rápidas (Navegação entre as 6 telas)
+            // Seção Estilo Moovit: "Para onde você quer ir?"
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => Navigator.pushNamed(context, '/route-planner'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.search, color: AppTheme.primaryBlue),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Para onde você quer ir? (Ver melhor ônibus / baldeação)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ),
+                            Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.primaryBlue),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          const Text(
+                            'Destinos rápidos: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          ...[
+                            {'label': 'Av. Paulista', 'destino': 'PAULISTA'},
+                            {'label': 'Pinheiros', 'destino': 'PINHEIROS'},
+                            {'label': 'Centro / Ramos', 'destino': 'RAMOS'},
+                            {'label': 'Ibirapuera', 'destino': 'IBIRAPUERA'},
+                            {'label': 'Vila Mariana', 'destino': 'VILA MARIANA'},
+                          ].map((d) => Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: ActionChip(
+                                  avatar: const Icon(Icons.place, size: 14, color: AppTheme.primaryBlue),
+                                  label: Text(
+                                    d['label']!,
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/route-planner',
+                                      arguments: {
+                                        'origem': 'LAPA',
+                                        'destino': d['destino'],
+                                      },
+                                    );
+                                  },
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Seção de Ações Rápidas (Navegação entre as 7 telas)
             const Text(
               'Serviços de Mobilidade e Cidadania',
               style: TextStyle(
@@ -143,18 +231,36 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 600;
                 return GridView.count(
-                  crossAxisCount: isWide ? 3 : 2,
+                  crossAxisCount: isWide ? 4 : 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: isWide ? 1.8 : 1.35,
+                  childAspectRatio: isWide ? 1.5 : 1.15,
                   children: [
+                    _QuickActionCard(
+                      icon: Icons.route,
+                      title: 'Como Chegar',
+                      subtitle: 'Melhor ônibus e baldeação',
+                      color: AppTheme.primaryBlue,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/route-planner');
+                      },
+                    ),
+                    _QuickActionCard(
+                      icon: Icons.radar,
+                      title: 'Radar no Ponto',
+                      subtitle: 'Previsão de chegada SPTrans',
+                      color: AppTheme.secondaryTeal,
+                      onTap: () {
+                        Navigator.pushNamed(context, '/sptrans');
+                      },
+                    ),
                     _QuickActionCard(
                       icon: Icons.campaign_outlined,
                       title: 'Ocorrências Cidadãs',
                       subtitle: 'Filtrar e consultar relatos',
-                      color: AppTheme.primaryBlue,
+                      color: const Color(0xFF6366F1),
                       onTap: () async {
                         await Navigator.pushNamed(context, '/occurrences');
                         _carregarPainel();
@@ -168,15 +274,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () async {
                         await Navigator.pushNamed(context, '/occurrence-form');
                         _carregarPainel();
-                      },
-                    ),
-                    _QuickActionCard(
-                      icon: Icons.radar,
-                      title: 'Radar SPTrans',
-                      subtitle: 'Linhas e ônibus acessíveis',
-                      color: AppTheme.secondaryTeal,
-                      onTap: () {
-                        Navigator.pushNamed(context, '/sptrans');
                       },
                     ),
                   ],

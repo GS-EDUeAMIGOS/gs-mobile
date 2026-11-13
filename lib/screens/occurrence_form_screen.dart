@@ -26,6 +26,30 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
   NivelGravidade _gravidade = NivelGravidade.ALTA;
   bool _afetaAcessibilidade = true;
   bool _isSaving = false;
+  bool _initializedArgs = false;
+  String? _letreiroSelecionado;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initializedArgs) {
+      _initializedArgs = true;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        if (args['codigoLinha'] != null) {
+          _codigoLinhaController.text = args['codigoLinha'].toString();
+        }
+        if (args['prefixoVeiculo'] != null) {
+          _prefixoVeiculoController.text = args['prefixoVeiculo'].toString();
+        }
+        if (args['letreiro'] != null) {
+          _letreiroSelecionado = args['letreiro'].toString();
+          _tituloController.text =
+              'Problema no ônibus ${args['prefixoVeiculo']} (Linha $_letreiroSelecionado)';
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -240,42 +264,13 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Campos opcionais de identificação SPTrans
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _codigoLinhaController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Cód. Linha (SPTrans)',
-                                    hintText: 'Ex.: 2506',
-                                    prefixIcon: Icon(Icons.directions_bus_outlined),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _prefixoVeiculoController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Prefixo do Veículo',
-                                    hintText: 'Ex.: 12540',
-                                    prefixIcon: Icon(Icons.confirmation_number_outlined),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
+                          // Campos opcionais de identificação do Ônibus
                           TextFormField(
-                            controller: _codigoParadaController,
-                            keyboardType: TextInputType.number,
+                            controller: _prefixoVeiculoController,
                             decoration: const InputDecoration(
-                              labelText: 'Código da Parada SPTrans (opcional)',
-                              hintText: 'Ex.: 340015329 (Parada Paulista)',
-                              prefixIcon: Icon(Icons.place_outlined),
+                              labelText: 'Número do Ônibus (pintado na porta/lateral)',
+                              hintText: 'Ex.: 51215 (opcional)',
+                              prefixIcon: Icon(Icons.directions_bus_outlined),
                             ),
                           ),
                           const SizedBox(height: 12),

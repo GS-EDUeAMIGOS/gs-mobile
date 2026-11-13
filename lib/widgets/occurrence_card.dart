@@ -157,21 +157,20 @@ class OccurrenceCard extends StatelessWidget {
               // Rodapé com Linha/Parada, Status e seta indicando navegação para detalhes
               Row(
                 children: [
-                  if (ocorrencia.codigoLinha != null) ...[
+                  if (ocorrencia.prefixoVeiculo != null && ocorrencia.prefixoVeiculo!.isNotEmpty) ...[
                     const Icon(Icons.directions_bus, size: 16, color: Color(0xFF64748B)),
                     const SizedBox(width: 4),
                     Text(
-                      'Linha #${ocorrencia.codigoLinha}',
+                      'Ônibus nº ${ocorrencia.prefixoVeiculo}',
                       style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(width: 12),
-                  ],
-                  if (ocorrencia.prefixoVeiculo != null && ocorrencia.prefixoVeiculo!.isNotEmpty) ...[
-                    const Icon(Icons.confirmation_number_outlined, size: 16, color: Color(0xFF64748B)),
+                  ] else if (ocorrencia.codigoLinha != null) ...[
+                    const Icon(Icons.route, size: 16, color: Color(0xFF64748B)),
                     const SizedBox(width: 4),
-                    Text(
-                      'Veículo ${ocorrencia.prefixoVeiculo}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    const Text(
+                      'Linha SPTrans vinculada',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(width: 12),
                   ],
