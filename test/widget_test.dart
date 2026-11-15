@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:viacidada_mobile/main.dart';
 import 'package:viacidada_mobile/models/olho_vivo_model.dart';
+import 'package:viacidada_mobile/screens/route_navigation_screen.dart';
+import 'package:viacidada_mobile/services/paradas_linha_fallback_helper.dart';
 import 'package:viacidada_mobile/widgets/ponto_map_widget.dart';
 
 void main() {
@@ -91,5 +93,108 @@ void main() {
     );
     expect(distancia, greaterThan(10));
     expect(distancia, lessThan(100));
+  });
+
+  test('Mapeia veiculos em tempo real para a parada mais proxima da linha', () {
+    const parada1 = ParadaResumoModel(
+      codigoParada: 101,
+      nomeParada: 'PARADA PAULISTA',
+      endereco: 'AV PAULISTA, 1000',
+      latitude: -23.5614,
+      longitude: -46.6558,
+    );
+    const parada2 = ParadaResumoModel(
+      codigoParada: 102,
+      nomeParada: 'PARADA CONSOLACAO',
+      endereco: 'R DA CONSOLACAO, 2000',
+      latitude: -23.5550,
+      longitude: -46.6620,
+    );
+    const veiculoPertoParada1 = VeiculoPosicaoModel(
+      prefixo: '41234',
+      acessivelPcD: true,
+      horarioCaptura: '13:50:00',
+      latitude: -23.5615,
+      longitude: -46.6559,
+    );
+
+    final mapa = RouteNavigationScreen.mapearVeiculosNasParadas(
+      [parada1, parada2],
+      [veiculoPertoParada1],
+    );
+
+    expect(mapa.containsKey(101), true);
+    expect(mapa.containsKey(102), false);
+    expect(mapa[101]!.first.veiculo.prefixo, '41234');
+    expect(mapa[101]!.first.estaPassandoNoPonto, true);
+  });
+
+  test('Filtra paradas espurias, ordena continuamente e limita a 10 paradas', () {
+    const embarque = ParadaResumoModel(
+      codigoParada: 1,
+      nomeParada: 'EMBARQUE',
+      endereco: '',
+      latitude: -23.5600,
+      longitude: -46.6500,
+    );
+    const desembarque = ParadaResumoModel(
+      codigoParada: 99,
+      nomeParada: 'DESEMBARQUE',
+      endereco: '',
+      latitude: -23.5750,
+      longitude: -46.6500,
+    );
+    const espuriaLonge = ParadaResumoModel(
+      codigoParada: 999,
+      nomeParada: 'ZONA LESTE DISTANTE',
+      endereco: '',
+      latitude: -23.5400,
+      longitude: -46.4500, // > 20km de distancia
+    );
+
+    // Gera 14 paradas intermediarias fora de ordem + 1 espuria
+    final intermediarias = List.generate(
+      14,
+      (i) => ParadaResumoModel(
+        codigoParada: 10 + i,
+        nomeParada: 'PARADA $i',
+        endereco: '',
+        latitude: -23.5610 - (i * 0.001),
+        longitude: -46.6500,
+      ),
+    ).reversed.toList();
+
+    final resultado = ParadasLinhaFallbackHelper.filtrarEOrdenarCorredor(
+      paradas: [...intermediarias, espuriaLonge, desembarque, embarque],
+      paradaEmbarque: embarque,
+      paradaDesembarque: desembarque,
+    );
+
+    expect(resultado.length, 10);
+    expect(resultado.first.codigoParada, embarque.codigoParada);
+    expect(resultado.last.codigoParada, desembarque.codigoParada);
+    expect(resultado.any((p) => p.codigoParada == espuriaLonge.codigoParada), false);
+
+    // Garante ordenacao continua (latitudes decrescentes sem zigue-zague)
+    for (int i = 0; i < resultado.length - 1; i++) {
+      expect(resultado[i].latitude, greaterThan(resultado[i + 1].latitude));
+    }
+  });
+
+  test('Formata horario ISO em texto amigavel sem exibir string ISO crua', () {
+    const iso = '2026-11-15T20:22:16Z';
+    final formatado = PontoMapWidget.formatarHorarioAmigavel(iso);
+
+    expect(formatado.contains('T'), false);
+    expect(formatado.contains('Z'), false);
+    expect(
+      formatado == 'Agora mesmo' || formatado.startsWith('Atualizado às '),
+      true,
+    );
+
+    expect(
+      PontoMapWidget.formatarHorarioAmigavel('14:05:30'),
+      'Atualizado às 14:05',
+    );
   });
 }
