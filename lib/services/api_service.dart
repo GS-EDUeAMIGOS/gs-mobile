@@ -13,9 +13,16 @@ class ApiService {
   static final ApiService instance = ApiService._internal();
   ApiService._internal();
 
+  static const Duration _ttlCacheParadas = Duration(minutes: 4);
+
   AuthUser? _currentUser;
   AuthUser? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null && _currentUser!.token.isNotEmpty;
+
+  // Cache leve em memória (TTL de 4 minutos) exclusivo para dados semi-estáticos de paradas.
+  // Dados em tempo real (previsões de chegada e GPS dos veículos) NUNCA são cacheados.
+  final Map<String, _CacheEntry<List<ParadaResumoModel>>> _cacheParadas = {};
+  final Map<String, _CacheEntry<ParadasProximasGpsResponseModel>> _cacheParadasGps = {};
 
   /// Detecta automaticamente o endereço da API Java:
   /// - No Navegador (Web) ou Windows Desktop: usa localhost:8080
@@ -44,6 +51,13 @@ class ApiService {
 
   void logout() {
     _currentUser = null;
+    limparCacheParadas();
+  }
+
+  /// Limpa o cache em memória das consultas de paradas (útil ao trocar usuário ou forçar refresh)
+  void limparCacheParadas() {
+    _cacheParadas.clear();
+    _cacheParadasGps.clear();
   }
 
   // ===========================================================================
@@ -208,7 +222,17 @@ class ApiService {
   Future<List<ParadaResumoModel>> buscarParadasPorLinha(
     int codigoLinha, {
     String? termo,
+    bool ignorarCache = false,
   }) async {
+    final termoNormalizado = termo?.trim().toUpperCase() ?? '';
+    final cacheKey = 'linha:$codigoLinha:$termoNormalizado';
+    if (!ignorarCache) {
+      final cached = _cacheParadas[cacheKey];
+      if (cached != null && cached.isValid) {
+        return cached.value;
+      }
+    }
+
     final queryParams = <String, String>{};
     if (termo != null && termo.trim().isNotEmpty) {
       queryParams['termo'] = termo.trim();
@@ -220,25 +244,47 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
-      return list
+      final paradas = list
           .map((item) => ParadaResumoModel.fromJson(item as Map<String, dynamic>))
           .toList();
+      _cacheParadas[cacheKey] = _CacheEntry(
+        value: paradas,
+        expiresAt: DateTime.now().add(_ttlCacheParadas),
+      );
+      return paradas;
     } else {
       throw Exception(_extractErrorMessage(response, 'Erro ao consultar paradas da linha.'));
     }
   }
 
-  Future<List<ParadaResumoModel>> buscarParadas(String termo) async {
+  Future<List<ParadaResumoModel>> buscarParadas(
+    String termo, {
+    bool ignorarCache = false,
+  }) async {
+    final termoEfetivo = termo.trim().isEmpty ? 'PAULISTA' : termo.trim();
+    final cacheKey = 'termo:${termoEfetivo.toUpperCase()}';
+    if (!ignorarCache) {
+      final cached = _cacheParadas[cacheKey];
+      if (cached != null && cached.isValid) {
+        return cached.value;
+      }
+    }
+
     final uri = Uri.parse('$baseUrl/paradas').replace(
-      queryParameters: {'termo': termo.trim().isEmpty ? 'PAULISTA' : termo.trim()},
+      queryParameters: {'termo': termoEfetivo},
     );
     final response = await http.get(uri, headers: _headers());
 
     if (response.statusCode == 200) {
       final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
-      return list
+      final paradas = list
           .map((item) => ParadaResumoModel.fromJson(item as Map<String, dynamic>))
           .toList();
+      _cacheParadas[cacheKey] = _CacheEntry(
+        value: paradas,
+        expiresAt: DateTime.now().add(_ttlCacheParadas),
+      );
+      return paradas;
     } else {
       throw Exception(_extractErrorMessage(response, 'Erro ao consultar paradas de ônibus da SPTrans.'));
     }
@@ -260,7 +306,18 @@ class ApiService {
     required double lat,
     required double lon,
     String? termo,
+    bool ignorarCache = false,
   }) async {
+    final termoNormalizado = termo?.trim().toUpperCase() ?? '';
+    final cacheKey =
+        'gps:${lat.toStringAsFixed(4)}:${lon.toStringAsFixed(4)}:$termoNormalizado';
+    if (!ignorarCache) {
+      final cached = _cacheParadasGps[cacheKey];
+      if (cached != null && cached.isValid) {
+        return cached.value;
+      }
+    }
+
     final queryParams = <String, String>{
       'lat': lat.toString(),
       'lon': lon.toString(),
@@ -275,7 +332,12 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      return ParadasProximasGpsResponseModel.fromJson(data);
+      final parsed = ParadasProximasGpsResponseModel.fromJson(data);
+      _cacheParadasGps[cacheKey] = _CacheEntry(
+        value: parsed,
+        expiresAt: DateTime.now().add(_ttlCacheParadas),
+      );
+      return parsed;
     } else {
       throw Exception(_extractErrorMessage(response, 'Erro ao localizar paradas próximas pelo GPS.'));
     }
@@ -337,4 +399,16 @@ class ApiService {
     }
     return '$fallback (HTTP ${response.statusCode})';
   }
+}
+
+class _CacheEntry<T> {
+  final T value;
+  final DateTime expiresAt;
+
+  const _CacheEntry({
+    required this.value,
+    required this.expiresAt,
+  });
+
+  bool get isValid => DateTime.now().isBefore(expiresAt);
 }

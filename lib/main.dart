@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/occurrence_detail_screen.dart';
 import 'screens/occurrence_form_screen.dart';
 import 'screens/occurrences_screen.dart';
+import 'screens/route_navigation_screen.dart';
 import 'screens/route_planner_screen.dart';
 import 'screens/sptrans_screen.dart';
 import 'theme/app_theme.dart';
@@ -33,6 +34,7 @@ class ViaCidadaApp extends StatelessWidget {
         '/occurrence-form': (context) => const OccurrenceFormScreen(),
         '/sptrans': (context) => const SptransScreen(),
         '/route-planner': (context) => const RoutePlannerScreen(),
+        '/route-navigation': (context) => const RouteNavigationScreen(),
       },
     );
   }

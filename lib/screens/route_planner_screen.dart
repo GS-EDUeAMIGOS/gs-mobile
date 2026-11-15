@@ -729,6 +729,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
               ...opcoes.map(
                 (opcao) => _RouteOptionCard(
                   opcao: opcao,
+                  rotaPlanejada: _rotaPlanejada!,
                   termoOrigem:
                       localOrig?.termoBuscaSptrans ?? _rotaPlanejada!.origemBuscada,
                 ),
@@ -743,10 +744,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
 class _RouteOptionCard extends StatelessWidget {
   final OpcaoRotaModel opcao;
+  final RotaPlanejadaResponseModel rotaPlanejada;
   final String termoOrigem;
 
   const _RouteOptionCard({
     required this.opcao,
+    required this.rotaPlanejada,
     required this.termoOrigem,
   });
 
@@ -861,6 +864,37 @@ class _RouteOptionCard extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF475569),
+              ),
+            ),
+            // Botão visível e direto para iniciar a rota (estilo Moovit)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/route-navigation',
+                    arguments: {
+                      'opcao': opcao,
+                      'rota': rotaPlanejada,
+                    },
+                  );
+                },
+                icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                label: const Text(
+                  'Iniciar Rota',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: opcao.recomendada
+                      ? AppTheme.secondaryTeal
+                      : AppTheme.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 14),
