@@ -1,94 +1,91 @@
-# viacidada_mobile
+# ViaCidadã Mobile — Global Solution FIAP 2026/2 (CitizenTech)
 
-A new Flutter project.
+> **Disciplina:** Mobile Application Development | **Tema:** CitizenTech — Mobilidade Urbana Acessível
 
-## Getting Started
+Aplicativo multiplataforma em **Flutter e Dart 3** que conecta cidadãos — com foco especial em **Pessoas com Deficiência (PcD)** e usuários com mobilidade reduzida — ao transporte público acessível, planejamento multimodal de rotas, previsão de chegada em tempo real (SPTrans Olho Vivo) e registro colaborativo de ocorrências urbanas.
 
-This project is a starting point for a Flutter application.
+O aplicativo consome diretamente a API REST em Java/Spring Boot ([gs-java-api](https://github.com/GS-EDUeAMIGOS/gs-java-api)) e também possui fallback local em memória no `ApiService` para garantir demonstração funcional mesmo caso o backend não esteja em execução.
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 1. Equipe, Vídeo e ODS da ONU
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# gs-mobile-flutter
+### Integrantes do Grupo
+> Preencher com os dados oficiais cadastrados no Portal FIAP antes da submissão final:
 
-**FIAP — Global Solution 2026/2 — CitizenTech**  
-**Disciplina:** Mobile Application Development
+| Nome Completo | RM | Turma |
+|---|---|---|
+| *(Preencher Nome)* | *(RM)* | *(2TDS)* |
 
-> Estado: preparação documental inicial. Não há aplicação, testes executados, infraestrutura provisionada ou entrega concluída neste repositório.
+### Vídeo de Demonstração (Emulador / Dispositivo Físico)
+- **Link do Vídeo (YouTube Não Listado — até 5 min):** *(Inserir link após gravação em emulador ou celular)*
 
-## Finalidade e limites
+### Cidadão Beneficiado & Conexão com os ODS (ONU)
+- **Cidadão Beneficiado:** Passageiros do transporte público urbano, especialmente Pessoas com Deficiência (PcD), idosos e pessoas com mobilidade reduzida que dependem de veículos com elevador/rampa acessível e infraestrutura adequada nas paradas.
+- **ODS 10 — Redução das Desigualdades:** Promove autonomia e inclusão no deslocamento diário ao destacar ônibus acessíveis e alertas críticos em tempo real.
+- **ODS 11 — Cidades e Comunidades Sustentáveis (Meta 11.2):** Contribui para sistemas de transporte seguros, acessíveis e sustentáveis com participação cidadã.
 
-Aplicativo Flutter/Dart com cinco telas, navegação, estado, formulário validado e vídeo em emulador/dispositivo.
+---
 
-Este repositório representa um **entregável acadêmico da GS**, não o produto completo nem um entregável do Challenge. Os sete repositórios devem representar a mesma solução CitizenTech (slide 20). A solução, o nome do grupo, os integrantes, RMs, turma e responsáveis ainda precisam de confirmação específica para esta GS.
+## 2. Arquitetura, Telas e Requisitos Atendidos
 
-Nenhum código, modelo de domínio ou identidade do Challenge foi copiado. Reutilização futura deve ter origem principal, versão e revisão combinadas; separar entregas não significa duplicar implementação sem controle.
+```text
+lib/
+ ├─ main.dart         # MaterialApp, tema global e tabela de rotas nomeadas
+ ├─ models/           # Modelos de domínio (AuthUser, OcorrenciaModel, OlhoVivoModel)
+ ├─ services/         # ApiService (HTTP/JWT + fallback offline), LocationService (GPS)
+ ├─ screens/          # 8 telas conectadas por navegação fluida e passagem de parâmetros
+ ├─ widgets/          # Componentes reutilizáveis (OccurrenceCard, PontoMapWidget, marcadores)
+ └─ theme/            # Identidade visual consistente (AppTheme e MapTheme)
+```
 
-## Fonte e prazo
+### Fluxo das 8 Telas (mínimo exigido: 5)
+1. **`/login` (`LoginScreen`)**: Autenticação JWT (`POST /api/auth/login`), cadastro de cidadão (`POST /api/auth/register`) com `Form` + `GlobalKey<FormState>` e opção de acesso rápido em modo visitante.
+2. **`/home` (`HomeScreen`)**: Painel principal com atalhos rápidos (`GridView`), busca rápida de destinos e lista de alertas críticos de acessibilidade (`ListView`).
+3. **`/occurrences` (`OccurrencesScreen`)**: Listagem completa de ocorrências com filtros dinâmicos (`setState()`), busca textual e remoção.
+4. **`/occurrence-detail` (`OccurrenceDetailScreen`)**: Detalhamento da ocorrência recebida via passagem de parâmetros (`ModalRoute.of(context)?.settings.arguments`).
+5. **`/occurrence-form` (`OccurrenceFormScreen`)**: Formulário completo com `TextFormField`, `DropdownButtonFormField`, `SwitchListTile`, `GlobalKey<FormState>`, validações alinhadas ao backend e feedback imediato via `SnackBar`.
+6. **`/sptrans` (`SptransScreen`)**: Consulta ao radar de linhas, paradas e previsão de chegada em tempo real com mapa interativo.
+7. **`/route-planner` (`RoutePlannerScreen`)**: Planejador de rotas estilo Moovit com suporte a GPS e baldeação.
+8. **`/route-navigation` (`RouteNavigationScreen`)**: Navegação ativa da rota selecionada em mapa dark mode.
 
-Fonte primária fornecida pelo usuário: `2TDS Agosto - Global Solution 2026-2.pptx`, slides 67–80. Orientações gerais: slides 11–16 e 20; submissão: slides 81–85. A numeração é a posição real dos slides no PPTX, não o contador interno de cada disciplina.
+---
 
-- **Entrega indicada: 19/11/2026, até 23h55, no Portal FIAP** (slide 14).
-- Cadastro do grupo indicado até **13/11/2026** (slides 12 e 14); notas do arquivo pedem confirmação desse prazo.
-- Apresentações indicadas de **23 a 27/11/2026**; conferir modalidade e agenda com o professor.
-- Este checklist é derivado do PPTX, não substitui rubrica final e instruções do Portal. O original não foi republicado.
+## 3. Como Executar e Testar
 
-## Escopo e checklist
+### Pré-requisitos
+- **Flutter SDK 3.x** / **Dart 3.x**
+- Emulador Android, dispositivo físico ou Chrome/Desktop para testes
 
-Veja [requisitos da disciplina](docs/requisitos-gs.md) e [decisões e pendências](docs/pendencias.md).
+### Comandos
 
-Backend e banco não são exigidos na rubrica Mobile (slides 68 e 71). Entretanto, a apresentação de Java exige Mobile consumindo a API (slide 57). O projeto Flutter será adicionado depois; não há app executável nesta preparação.
+```powershell
+# 1. Instalar dependências
+flutter pub get
 
-## Equipe e responsabilidade
+# 2. Executar os testes automatizados de widgets
+flutter test
 
-| Informação | Situação |
-|---|---|
-| Grupo, solução e cidadão beneficiado | A confirmar para a GS |
-| Integrantes, RM e turma | A confirmar para a GS |
-| Responsável principal desta disciplina | A confirmar — um único dono por tarefa |
-| Revisor | A combinar conforme fronteiras afetadas |
+# 3. Rodar o aplicativo (emulador Android ou dispositivo conectado)
+flutter run
+```
 
-Não interpretar membros da organização ou integrantes do Challenge como composição aprovada da GS. Documentar ODS e contribuição às metas conforme slide 11, usando fontes para alegações de impacto.
+> **Usuários de teste:** `cidadao@viacidada.com.br` / `Cidadao@123` (`ROLE_CIDADAO`) e `admin@viacidada.com.br` / `Admin@123` (`ROLE_ADMIN`).
 
-## Execução e testes
+---
 
-Ainda não há software executável. Na implementação, substituir esta seção por pré-requisitos e versões reais, configuração sem segredos, comandos reproduzíveis, dados sintéticos e resultados de testes efetivamente executados. Não há build ou teste aprovado apenas pela existência desta documentação.
+## 4. Declaração de Uso de IA Generativa
 
-## Evidências e submissão
+Em conformidade com as diretrizes da Global Solution FIAP 2026/2:
+- **Ferramentas utilizadas:** Assistente de programação com IA integrado à IDE (Antigravity / Gemini) para apoio na estruturação inicial de camadas, revisão de validações, testes de widgets e organização da documentação (`README.md`).
+- **Supervisão humana:** Todo o código, fluxo de navegação, gerenciamento de estado (`StatefulWidget` / `setState`) e integração com a API Java foram revisados, testados e validados pela equipe.
 
-Arquivo .txt com nome do grupo, nomes dos integrantes, link do vídeo e endereço do GitHub público (slide 79). Conferir identificação com RM e turma prevista na orientação geral quando aplicável.
+---
 
-Organização das evidências: [evidence/README.md](evidence/README.md). Orientações de submissão: [delivery/README.md](delivery/README.md). Links de vídeo, diagramas e publicação permanecem pendentes; nenhum artefato final foi gerado.
-
-## Repositórios relacionados da GS
-
+## 5. Repositórios Relacionados da GS
+- [gs-java-api](https://github.com/GS-EDUeAMIGOS/gs-java-api) — Java Advanced (API REST consumida por este app)
 - [gs-dotnet-api](https://github.com/GS-EDUeAMIGOS/gs-dotnet-api) — Advanced Business Development with .NET
 - [gs-arquitetura-qa](https://github.com/GS-EDUeAMIGOS/gs-arquitetura-qa) — Compliance, Quality Assurance & Tests
 - [gs-devops-cloud](https://github.com/GS-EDUeAMIGOS/gs-devops-cloud) — DevOps Tools & Cloud Computing
 - [gs-iot-redes](https://github.com/GS-EDUeAMIGOS/gs-iot-redes) — Disruptive Architectures: IoT, IoB & Generative IA
-- [gs-java-api](https://github.com/GS-EDUeAMIGOS/gs-java-api) — Java Advanced
 - [gs-database](https://github.com/GS-EDUeAMIGOS/gs-database) — Mastering Relational and Non-Relational Database
-
-As referências acima organizam entregas; não significam que todas as aplicações serão serviços separados do produto. Registrar contratos entre Java/.NET, Banco, Mobile, IoT e DevOps antes de integrar.
-
-## Contribuição e segurança
-
-Veja [CONTRIBUTING.md](CONTRIBUTING.md). Não versionar senhas, tokens, strings de conexão reais ou dados pessoais de usuários. Exemplos devem usar valores fictícios.
-
-A preparação não configura equipes, permissões, CODEOWNERS, proteção de branches, CI ou deploy. Repositório público não substitui entrega no Portal nem comprova atendimento da rubrica.
-
-## Aplicativo Flutter
-
-O código executável está em `lib/`. Para executar e testar:
-
-```powershell
-flutter pub get
-flutter run
-flutter test
-```

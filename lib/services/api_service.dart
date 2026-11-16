@@ -24,6 +24,48 @@ class ApiService {
   final Map<String, _CacheEntry<List<ParadaResumoModel>>> _cacheParadas = {};
   final Map<String, _CacheEntry<ParadasProximasGpsResponseModel>> _cacheParadasGps = {};
 
+  // Dados mockados em memória usados SOMENTE como fallback quando a API Java estiver offline
+  // (garante que o app funcione tanto integrado ao backend Java quanto isolado na banca Mobile).
+  final List<OcorrenciaModel> _mockOcorrencias = [
+    OcorrenciaModel(
+      id: 1,
+      usuarioId: 2,
+      nomeUsuario: 'Maria Silva',
+      titulo: 'Elevador de acessibilidade travado',
+      descricao: 'O veículo prefixo 12540 da linha 8000-10 apresentou falha no elevador na Parada Paulista.',
+      tipo: TipoOcorrencia.ELEVADOR_INOPERANTE,
+      status: StatusOcorrencia.ABERTA,
+      gravidade: NivelGravidade.ALTA,
+      codigoLinha: 2506,
+      codigoParada: 340015329,
+      prefixoVeiculo: '12540',
+      afetaAcessibilidade: true,
+      criadoEm: DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
+    ),
+    OcorrenciaModel(
+      id: 2,
+      usuarioId: 1,
+      nomeUsuario: 'Administrador ViaCidadã',
+      titulo: 'Piso tátil danificado na calçada da parada',
+      descricao: 'Placas do piso tátil soltas próximo ao abrigo da parada 340015329.',
+      tipo: TipoOcorrencia.INFRAESTRUTURA_PARADA,
+      status: StatusOcorrencia.CONFIRMADA,
+      gravidade: NivelGravidade.MEDIA,
+      codigoParada: 340015329,
+      afetaAcessibilidade: true,
+      criadoEm: DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
+    ),
+  ];
+
+  bool _isConnectionError(Object e) {
+    final msg = e.toString().toLowerCase();
+    return e is http.ClientException ||
+        msg.contains('socketexception') ||
+        msg.contains('connection refused') ||
+        msg.contains('failed host lookup') ||
+        msg.contains('failed to fetch');
+  }
+
   /// Detecta automaticamente o endereço da API Java:
   /// - No Navegador (Web) ou Windows Desktop: usa localhost:8080
   /// - No Emulador Android: usa 10.0.2.2:8080 (que aponta para o localhost da máquina hospedeira)
@@ -65,19 +107,40 @@ class ApiService {
   // ===========================================================================
 
   Future<AuthUser> login(String email, String senha) async {
-    final uri = Uri.parse('$baseUrl/auth/login');
-    final response = await http.post(
-      uri,
-      headers: _headers(includeAuth: false),
-      body: jsonEncode({'email': email.trim(), 'senha': senha}),
-    );
+    try {
+      final uri = Uri.parse('$baseUrl/auth/login');
+      final response = await http.post(
+        uri,
+        headers: _headers(includeAuth: false),
+        body: jsonEncode({'email': email.trim(), 'senha': senha}),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      _currentUser = AuthUser.fromJson(data);
-      return _currentUser!;
-    } else {
-      throw Exception(_extractErrorMessage(response, 'Credenciais inválidas ou erro no servidor.'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        _currentUser = AuthUser.fromJson(data);
+        return _currentUser!;
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Credenciais inválidas ou erro no servidor.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        final normalized = email.trim().toLowerCase();
+        final isAdmin = normalized == 'admin@viacidada.com.br' && senha == 'Admin@123';
+        final isCidadao = normalized == 'cidadao@viacidada.com.br' && senha == 'Cidadao@123';
+        if (isAdmin || isCidadao) {
+          _currentUser = AuthUser(
+            token: 'offline-demo-jwt-token',
+            tipo: 'Bearer',
+            usuarioId: isAdmin ? 1 : 2,
+            nome: isAdmin ? 'Administrador ViaCidadã (Offline)' : 'Maria Silva (Offline)',
+            email: normalized,
+            role: isAdmin ? 'ROLE_ADMIN' : 'ROLE_CIDADAO',
+          );
+          return _currentUser!;
+        }
+        throw Exception('API Java offline. Para testar offline use cidadao@viacidada.com.br / Cidadao@123.');
+      }
+      rethrow;
     }
   }
 
@@ -87,24 +150,39 @@ class ApiService {
     required String senha,
     required bool possuiMobilidadeReduzida,
   }) async {
-    final uri = Uri.parse('$baseUrl/auth/register');
-    final response = await http.post(
-      uri,
-      headers: _headers(includeAuth: false),
-      body: jsonEncode({
-        'nome': nome.trim(),
-        'email': email.trim(),
-        'senha': senha,
-        'possuiMobilidadeReduzida': possuiMobilidadeReduzida,
-      }),
-    );
+    try {
+      final uri = Uri.parse('$baseUrl/auth/register');
+      final response = await http.post(
+        uri,
+        headers: _headers(includeAuth: false),
+        body: jsonEncode({
+          'nome': nome.trim(),
+          'email': email.trim(),
+          'senha': senha,
+          'possuiMobilidadeReduzida': possuiMobilidadeReduzida,
+        }),
+      );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      _currentUser = AuthUser.fromJson(data);
-      return _currentUser!;
-    } else {
-      throw Exception(_extractErrorMessage(response, 'Não foi possível concluir o cadastro.'));
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        _currentUser = AuthUser.fromJson(data);
+        return _currentUser!;
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Não foi possível concluir o cadastro.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        _currentUser = AuthUser(
+          token: 'offline-demo-jwt-token',
+          tipo: 'Bearer',
+          usuarioId: 99,
+          nome: nome.trim(),
+          email: email.trim().toLowerCase(),
+          role: 'ROLE_CIDADAO',
+        );
+        return _currentUser!;
+      }
+      rethrow;
     }
   }
 
@@ -129,61 +207,114 @@ class ApiService {
       queryParams['termo'] = termo.trim();
     }
 
-    final uri = Uri.parse('$baseUrl/ocorrencias').replace(queryParameters: queryParams);
-    final response = await http.get(uri, headers: _headers());
+    try {
+      final uri = Uri.parse('$baseUrl/ocorrencias').replace(queryParameters: queryParams);
+      final response = await http.get(uri, headers: _headers());
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      // O endpoint /api/ocorrencias retorna um Page<OcorrenciaDTO.Response> do Spring Data,
-      // onde a lista de itens fica dentro da propriedade "content".
-      final content = decoded['content'] as List<dynamic>? ?? [];
-      return content
-          .map((item) => OcorrenciaModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception(_extractErrorMessage(response, 'Erro ao carregar ocorrências.'));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        // O endpoint /api/ocorrencias retorna um Page<OcorrenciaDTO.Response> do Spring Data,
+        // onde a lista de itens fica dentro da propriedade "content".
+        final content = decoded['content'] as List<dynamic>? ?? [];
+        return content
+            .map((item) => OcorrenciaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Erro ao carregar ocorrências.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        return _mockOcorrencias.where((item) {
+          if (tipo != null && item.tipo != tipo) return false;
+          if (afetaAcessibilidade != null && item.afetaAcessibilidade != afetaAcessibilidade) return false;
+          if (termo != null && termo.trim().isNotEmpty) {
+            final t = termo.trim().toLowerCase();
+            return item.titulo.toLowerCase().contains(t) || item.descricao.toLowerCase().contains(t);
+          }
+          return true;
+        }).toList();
+      }
+      rethrow;
     }
   }
 
   Future<List<OcorrenciaModel>> listarCriticasAcessibilidade() async {
-    final uri = Uri.parse('$baseUrl/ocorrencias/acessibilidade-criticas');
-    final response = await http.get(uri, headers: _headers());
+    try {
+      final uri = Uri.parse('$baseUrl/ocorrencias/acessibilidade-criticas');
+      final response = await http.get(uri, headers: _headers());
 
-    if (response.statusCode == 200) {
-      final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
-      return list
-          .map((item) => OcorrenciaModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } else {
-      throw Exception(_extractErrorMessage(response, 'Erro ao buscar alertas críticos de acessibilidade.'));
+      if (response.statusCode == 200) {
+        final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+        return list
+            .map((item) => OcorrenciaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Erro ao buscar alertas críticos de acessibilidade.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        return _mockOcorrencias.where((o) => o.afetaAcessibilidade).toList();
+      }
+      rethrow;
     }
   }
 
   Future<OcorrenciaModel> criarOcorrencia(OcorrenciaModel ocorrencia) async {
-    final uri = Uri.parse('$baseUrl/ocorrencias');
-    final response = await http.post(
-      uri,
-      headers: _headers(includeAuth: true),
-      body: jsonEncode(ocorrencia.toJson()),
-    );
+    try {
+      final uri = Uri.parse('$baseUrl/ocorrencias');
+      final response = await http.post(
+        uri,
+        headers: _headers(includeAuth: true),
+        body: jsonEncode(ocorrencia.toJson()),
+      );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      return OcorrenciaModel.fromJson(data);
-    } else {
-      throw Exception(_extractErrorMessage(
-        response,
-        'Falha ao registrar ocorrência (verifique se você está autenticado).',
-      ));
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return OcorrenciaModel.fromJson(data);
+      } else {
+        throw Exception(_extractErrorMessage(
+          response,
+          'Falha ao registrar ocorrência (verifique se você está autenticado).',
+        ));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        final created = OcorrenciaModel(
+          id: _mockOcorrencias.length + 1,
+          usuarioId: _currentUser?.usuarioId ?? 2,
+          nomeUsuario: _currentUser?.nome ?? 'Cidadão (Modo Offline)',
+          titulo: ocorrencia.titulo,
+          descricao: ocorrencia.descricao,
+          tipo: ocorrencia.tipo,
+          status: StatusOcorrencia.ABERTA,
+          gravidade: ocorrencia.gravidade,
+          codigoLinha: ocorrencia.codigoLinha,
+          codigoParada: ocorrencia.codigoParada,
+          prefixoVeiculo: ocorrencia.prefixoVeiculo,
+          afetaAcessibilidade: ocorrencia.afetaAcessibilidade,
+          criadoEm: DateTime.now().toIso8601String(),
+        );
+        _mockOcorrencias.insert(0, created);
+        return created;
+      }
+      rethrow;
     }
   }
 
   Future<void> removerOcorrencia(int id) async {
-    final uri = Uri.parse('$baseUrl/ocorrencias/$id');
-    final response = await http.delete(uri, headers: _headers(includeAuth: true));
+    try {
+      final uri = Uri.parse('$baseUrl/ocorrencias/$id');
+      final response = await http.delete(uri, headers: _headers(includeAuth: true));
 
-    if (response.statusCode != 204 && response.statusCode != 200) {
-      throw Exception(_extractErrorMessage(response, 'Não foi possível excluir a ocorrência.'));
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception(_extractErrorMessage(response, 'Não foi possível excluir a ocorrência.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        _mockOcorrencias.removeWhere((item) => item.id == id);
+        return;
+      }
+      rethrow;
     }
   }
 
