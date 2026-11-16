@@ -11,11 +11,14 @@ O aplicativo consome diretamente a API REST em Java/Spring Boot ([gs-java-api](h
 ## 1. Equipe, Vídeo e ODS da ONU
 
 ### Integrantes do Grupo
-> Preencher com os dados oficiais cadastrados no Portal FIAP antes da submissão final:
 
 | Nome Completo | RM | Turma |
 |---|---|---|
-| *(Preencher Nome)* | *(RM)* | *(2TDS)* |
+| Alisson Kawan Evangelista Silva | 567598 | 2TDS |
+| Kenji Fernandes Wakabayashi | 568156 | 2TDS |
+| Erick Ramos Santos | 567837 | 2TDS |
+| Eduardo Boni dos Santos | 567236 | 2TDS |
+| Marcos Vinicius de Jesus Almeida | 567214 | 2TDS |
 
 ### Vídeo de Demonstração (Emulador / Dispositivo Físico)
 - **Link do Vídeo (YouTube Não Listado — até 5 min):** *(Inserir link após gravação em emulador ou celular)*
