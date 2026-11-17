@@ -6,6 +6,7 @@ import '../services/location_service.dart';
 import '../services/paradas_linha_fallback_helper.dart';
 import '../theme/app_theme.dart';
 import '../theme/map_theme.dart';
+import '../widgets/app_back_button.dart';
 import '../widgets/ponto_map_widget.dart';
 import '../widgets/theme_selector_button.dart';
 
@@ -427,6 +428,7 @@ class _SptransScreenState extends State<SptransScreen> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         backgroundColor: colors.surface,
         foregroundColor: colors.onSurface,
         title: const Text('Radar & Mapa SPTrans'),
@@ -446,12 +448,12 @@ class _SptransScreenState extends State<SptransScreen> {
             ),
           ),
           TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: colors.onSurface),
+            style: TextButton.styleFrom(foregroundColor: colors.primary),
             onPressed: () => Navigator.pushNamed(context, '/route-planner'),
-            icon: const Icon(Icons.route, color: Colors.white, size: 18),
-            label: const Text(
+            icon: Icon(Icons.route, color: colors.primary, size: 18),
+            label: Text(
               'Como Chegar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              style: TextStyle(color: colors.primary, fontWeight: FontWeight.w700),
             ),
           ),
         ],

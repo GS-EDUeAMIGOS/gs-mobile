@@ -321,9 +321,21 @@ class ParadasLinhaFallbackHelper {
       if (!p.possuiCoordenadas) return false;
       final temAncorasReais = veiculosComGps.isNotEmpty ||
           paradasEixoConhecido.isNotEmpty ||
+          (paradaEmbarque != null && paradaEmbarque.possuiCoordenadas) ||
           (paradaDesembarque != null && paradaDesembarque.possuiCoordenadas);
       if (!temAncorasReais) return true;
 
+      if (paradaEmbarque != null && paradaEmbarque.possuiCoordenadas) {
+        if (PontoMapWidget.calcularDistanciaMetros(
+              p.latitude,
+              p.longitude,
+              paradaEmbarque.latitude,
+              paradaEmbarque.longitude,
+            ) <=
+            3800) {
+          return true;
+        }
+      }
       for (final v in veiculosComGps) {
         if (PontoMapWidget.calcularDistanciaMetros(
               p.latitude,
@@ -382,16 +394,14 @@ class ParadasLinhaFallbackHelper {
       }
     }
 
-    // Valida se a paradaEmbarque sugerida não é um falso positivo distante (> 4.5km do eixo da linha)
+    // Preserva sempre a parada de embarque e desembarque reais definidas na rota planejada como âncoras obrigatórias
     final ParadaResumoModel? embarqueValidado =
-        (paradaEmbarque != null && pertenceAoCorredorDaLinha(paradaEmbarque))
+        (paradaEmbarque != null && paradaEmbarque.possuiCoordenadas)
             ? paradaEmbarque
-            : (veiculosComGps.isEmpty && paradasEixoConhecido.isEmpty
-                ? paradaEmbarque
-                : null);
+            : null;
 
-    adicionarSeValida(embarqueValidado);
-    adicionarSeValida(paradaDesembarque);
+    adicionarSeValida(embarqueValidado, exigirCorredor: false);
+    adicionarSeValida(paradaDesembarque, exigirCorredor: false);
 
     // 2. Aciona enriquecimento do corredor se houver menos de 5 paradas válidas
     if (acumuladas.length < 5) {

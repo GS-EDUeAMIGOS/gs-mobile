@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_back_button.dart';
 import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 5 — Formulário de Nova Ocorrência Cidadã)
@@ -128,6 +129,7 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text('Registrar Nova Ocorrência'),
         actions: const [ThemeSelectorButton()],
       ),

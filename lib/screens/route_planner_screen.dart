@@ -3,6 +3,7 @@ import '../models/olho_vivo_model.dart';
 import '../services/api_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_back_button.dart';
 import '../widgets/ponto_map_widget.dart';
 import '../widgets/theme_selector_button.dart';
 
@@ -228,6 +229,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text('Como Chegar (GPS + Locais)'),
         actions: [
           const ThemeSelectorButton(),
