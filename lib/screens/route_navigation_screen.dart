@@ -809,6 +809,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
                       return _ParadaTimelineTile(
                         ordem: ordemOriginal > 0 ? ordemOriginal : index + 1,
                         parada: parada,
+                        letreiroLinha: passoAtivo.letreiroCompleto,
                         isFirst: isFirst,
                         isLast: isLast,
                         isEmbarque: isEmbarque,
@@ -906,7 +907,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
     Widget? badgeOnibus;
 
     if (onibusMaisProximo != null && distOnibusEmbarque != null) {
-      tituloOnibus = 'Ônibus nº ${onibusMaisProximo.prefixo}';
+      tituloOnibus = 'Linha ${passoAtivo.letreiroCompleto}';
       final String distFmt;
       if (distOnibusEmbarque <= 150) {
         distFmt = 'Chegando';
@@ -980,6 +981,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
 class _ParadaTimelineTile extends StatelessWidget {
   final int ordem;
   final ParadaResumoModel parada;
+  final String letreiroLinha;
   final bool isFirst;
   final bool isLast;
   final bool isEmbarque;
@@ -991,6 +993,7 @@ class _ParadaTimelineTile extends StatelessWidget {
   const _ParadaTimelineTile({
     required this.ordem,
     required this.parada,
+    required this.letreiroLinha,
     required this.isFirst,
     required this.isLast,
     required this.isEmbarque,
@@ -1146,8 +1149,8 @@ class _ParadaTimelineTile extends StatelessWidget {
                             ...veiculosAqui.map((info) {
                               final dist = info.distanciaMetros.round();
                               final label = info.estaPassandoNoPonto
-                                  ? '🚌 Ônibus #${info.veiculo.prefixo} passando aqui ($dist m)'
-                                  : '🚌 Ônibus #${info.veiculo.prefixo} próximo ($dist m)';
+                                  ? '🚌 Linha $letreiroLinha passando aqui ($dist m)'
+                                  : '🚌 Linha $letreiroLinha próximo ($dist m)';
                               return _BadgeTag(
                                 text: info.veiculo.acessivelPcD
                                     ? '$label • ♿'
