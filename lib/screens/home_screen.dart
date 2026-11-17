@@ -3,6 +3,7 @@ import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/occurrence_card.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 2 — Painel Principal / Dashboard Cidadão)
 /// Responsabilidade Única: Apresentar o resumo da sessão do usuário, atalhos de navegação
@@ -51,13 +52,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ApiService.instance.currentUser;
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('ViaCidadã • Painel'),
         actions: [
+          const ThemeSelectorButton(),
           IconButton(
-            tooltip: 'Atualizar dados da API Java',
+            tooltip: 'Atualizar dados',
             icon: const Icon(Icons.refresh),
             onPressed: _carregarPainel,
           ),
@@ -133,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
               elevation: 2,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
-                side: BorderSide(color: AppTheme.primaryBlue.withValues(alpha: 0.3)),
+                side: BorderSide(color: colors.outlineVariant),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -146,24 +149,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.search, color: AppTheme.primaryBlue),
-                            SizedBox(width: 10),
+                            Icon(Icons.search, color: colors.primary),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'Para onde você quer ir? (Ver melhor ônibus / baldeação)',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                                  color: colors.onSurface,
                                 ),
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios, size: 14, color: AppTheme.primaryBlue),
+                            Icon(Icons.arrow_forward_ios, size: 14, color: colors.primary),
                           ],
                         ),
                       ),
@@ -173,12 +176,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          const Text(
+                          Text(
                             'Destinos rápidos: ',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                           ...[
@@ -217,12 +220,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
 
             // Seção de Ações Rápidas (Navegação entre as 7 telas)
-            const Text(
+            Text(
               'Serviços de Mobilidade e Cidadania',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1E293B),
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 12),
@@ -287,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -296,12 +299,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF1E293B),
+                          color: colors.onSurface,
                         ),
                       ),
                       Text(
-                        'Dados em tempo real de GET /api/ocorrencias/acessibilidade-criticas',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        'Atualizado com os alertas de acessibilidade disponíveis',
+                        style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -324,22 +327,22 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             else if (_errorMessage != null)
               Card(
-                color: const Color(0xFFFEF2F2),
+                color: colors.errorContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.error_outline, color: AppTheme.dangerRed),
-                          SizedBox(width: 8),
+                          Icon(Icons.error_outline, color: colors.error),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Não foi possível conectar à API Java em localhost:8080',
+                              'Não foi possível carregar os alertas de acessibilidade',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.dangerRed,
+                                color: colors.error,
                               ),
                             ),
                           ),
@@ -347,8 +350,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Detalhe técnico: $_errorMessage\nCertifique-se de que o backend ViaCidadã está rodando (mvnw spring-boot:run).',
-                        style: const TextStyle(fontSize: 13),
+                        '$_errorMessage',
+                        style: TextStyle(fontSize: 13, color: colors.onErrorContainer),
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -392,8 +395,8 @@ class _HomeScreenState extends State<HomeScreen> {
           await Navigator.pushNamed(context, '/occurrence-form');
           _carregarPainel();
         },
-        backgroundColor: AppTheme.primaryBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
         icon: const Icon(Icons.add_comment),
         label: const Text('Relatar Problema'),
       ),
@@ -418,9 +421,10 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Card(
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -439,10 +443,10 @@ class _QuickActionCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
+                  color: colors.onSurface,
                 ),
               ),
               const SizedBox(height: 2),
@@ -450,9 +454,9 @@ class _QuickActionCard extends StatelessWidget {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],

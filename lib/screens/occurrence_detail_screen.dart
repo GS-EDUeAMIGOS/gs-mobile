@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 4 — Detalhes da Ocorrência Cidadã)
 /// Responsabilidade Única: Receber um objeto `OcorrenciaModel` via passagem de parâmetros
@@ -25,7 +26,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Excluir Ocorrência?'),
         content: Text(
-          'Deseja remover permanentemente a ocorrência "${ocorrencia.titulo}" (#${ocorrencia.id}) na API Java?',
+          'Deseja remover permanentemente a ocorrência "${ocorrencia.titulo}"?',
         ),
         actions: [
           TextButton(
@@ -33,7 +34,10 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.dangerRed),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Excluir'),
           ),
@@ -75,7 +79,10 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is! OcorrenciaModel) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Detalhes da Ocorrência')),
+        appBar: AppBar(
+          title: const Text('Detalhes da Ocorrência'),
+          actions: const [ThemeSelectorButton()],
+        ),
         body: const Center(
           child: Text('Nenhuma ocorrência selecionada.'),
         ),
@@ -84,11 +91,13 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
 
     final ocorrencia = args;
     final isAuthenticated = ApiService.instance.isAuthenticated;
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Ocorrência #${ocorrencia.id ?? "-"}'),
         actions: [
+          const ThemeSelectorButton(),
           if (isAuthenticated && ocorrencia.id != null)
             IconButton(
               tooltip: 'Excluir ocorrência (Requer JWT)',
@@ -139,19 +148,19 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                         const SizedBox(height: 16),
                         Text(
                           ocorrencia.titulo,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
+                            color: colors.onSurface,
                           ),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           ocorrencia.descricao,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             height: 1.5,
-                            color: Color(0xFF334155),
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -245,6 +254,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -253,7 +263,7 @@ class _InfoRow extends StatelessWidget {
           Icon(
             icon,
             size: 20,
-            color: highlight ? AppTheme.secondaryTeal : const Color(0xFF64748B),
+            color: highlight ? colors.secondary : colors.onSurfaceVariant,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -262,9 +272,9 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -273,7 +283,7 @@ class _InfoRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: highlight ? AppTheme.secondaryTeal : const Color(0xFF1E293B),
+                    color: highlight ? colors.secondary : colors.onSurface,
                   ),
                 ),
               ],

@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/olho_vivo_model.dart';
 import '../theme/map_theme.dart';
+import '../theme/theme_controller.dart';
 import 'map/bus_marker_widget.dart';
 import 'map/stop_marker_widget.dart';
 import 'map/user_gps_marker_widget.dart';
@@ -165,6 +166,15 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
       curve: Curves.easeInOutCubic,
     );
     _sincronizarPosicoesVeiculos(widget.veiculos, animar: false);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scopeController = ThemeControllerScope.maybeOf(context);
+    if (scopeController != null) {
+      _isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    }
   }
 
   @override
@@ -679,8 +689,8 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
       markers.add(
         Marker(
           point: LatLng(paradaAtual.latitude, paradaAtual.longitude),
-          width: 175,
-          height: 58,
+          width: 185,
+          height: 82,
           alignment: Alignment.bottomCenter,
           child: StopMarkerWidget(
             parada: paradaAtual,
@@ -1042,14 +1052,14 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                 },
               ),
 
-            // Camada 4: Localização GPS do Usuário (#38BDF8 pulsante)
+            // Camada 4: Localização GPS do Usuário (#38BDF8 pulsante + etiqueta VOCÊ)
             if (temGpsUsuario)
               MarkerLayer(
                 markers: [
                   Marker(
                     point: LatLng(widget.usuarioLat!, widget.usuarioLon!),
-                    width: 48,
-                    height: 48,
+                    width: 92,
+                    height: 86,
                     alignment: Alignment.center,
                     child: const UserGpsMarkerWidget(),
                   ),
@@ -1146,9 +1156,16 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                       ? 'Alternar para mapa claro (OSM)'
                       : 'Alternar para mapa escuro (Dark Transit)',
                   onTap: () {
-                    setState(() {
-                      _isDarkTheme = !_isDarkTheme;
-                    });
+                    final controller = ThemeControllerScope.maybeOf(context);
+                    if (controller != null) {
+                      controller.setMode(
+                        _isDarkTheme ? ThemeMode.light : ThemeMode.dark,
+                      );
+                    } else {
+                      setState(() {
+                        _isDarkTheme = !_isDarkTheme;
+                      });
+                    }
                   },
                 ),
               ],
@@ -1456,19 +1473,21 @@ class _MapLayerFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: active
               ? activeColor.withValues(alpha: 0.22)
-              : MapTheme.surfaceDark,
+              : colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? activeColor : MapTheme.borderDark,
+            color: active ? activeColor : colors.outlineVariant,
             width: 1.2,
           ),
         ),
@@ -1477,16 +1496,16 @@ class _MapLayerFilterChip extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 13,
-              color: active ? activeColor : MapTheme.textMuted,
+              size: 16,
+              color: active ? activeColor : colors.onSurfaceVariant,
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: active ? MapTheme.textPrimary : MapTheme.textMuted,
+                color: active ? colors.onSurface : colors.onSurfaceVariant,
               ),
             ),
           ],
@@ -1509,21 +1528,25 @@ class _MapDarkControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: MapTheme.surfaceDark.withValues(alpha: 0.90),
+      color: colors.surface.withValues(alpha: 0.94),
       elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: MapTheme.borderDark),
+        side: BorderSide(color: colors.outlineVariant),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: Tooltip(
           message: tooltip,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Icon(icon, size: 18, color: MapTheme.textPrimary),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Icon(icon, size: 20, color: colors.onSurface),
+            ),
           ),
         ),
       ),

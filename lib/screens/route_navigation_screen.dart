@@ -7,6 +7,7 @@ import '../services/location_service.dart';
 import '../services/paradas_linha_fallback_helper.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ponto_map_widget.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 8 — Navegação Ativa / Rota em Tempo Real Estilo Moovit)
 /// Responsabilidade Única:
@@ -370,7 +371,10 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
   Widget build(BuildContext context) {
     if (_opcao == null || _passosOnibus.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Rota em Andamento')),
+        appBar: AppBar(
+          title: const Text('Rota em Andamento'),
+          actions: const [ThemeSelectorButton()],
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -514,6 +518,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
           ],
         ),
         actions: [
+          const ThemeSelectorButton(),
           IconButton(
             tooltip: 'Atualizar posição agora',
             onPressed: _atualizandoVeiculos
@@ -1013,9 +1018,9 @@ class _ParadaTimelineTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
         decoration: BoxDecoration(
           color: isSelecionada
-              ? const Color(0xFFF0F9FF)
+              ? Theme.of(context).colorScheme.primaryContainer
               : temOnibus
-                  ? const Color(0xFFF0FDF4)
+                  ? Theme.of(context).colorScheme.tertiaryContainer
                   : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1104,7 +1109,7 @@ class _ParadaTimelineTile extends StatelessWidget {
                                         temOnibus)
                                     ? FontWeight.w800
                                     : FontWeight.w600,
-                                color: const Color(0xFF0F172A),
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -1218,12 +1223,24 @@ class _StatusViagemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isProximoOnibus = titulo == 'Próximo Ônibus';
+    final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isProximoOnibus ? 14 : 12,
+        vertical: isProximoOnibus ? 13 : 10,
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isProximoOnibus
+            ? colors.secondaryContainer.withValues(alpha: 0.55)
+            : colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isProximoOnibus
+              ? corDestaque.withValues(alpha: 0.55)
+              : colors.outlineVariant,
+          width: isProximoOnibus ? 1.5 : 1,
+        ),
       ),
       child: Row(
         children: [

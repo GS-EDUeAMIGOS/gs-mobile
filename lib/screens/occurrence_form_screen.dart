@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 5 — Formulário de Nova Ocorrência Cidadã)
 /// Responsabilidade Única: Capturar e validar os dados de um relato do cidadão usando
@@ -123,10 +124,12 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
   @override
   Widget build(BuildContext context) {
     final isAuthenticated = ApiService.instance.isAuthenticated;
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Registrar Nova Ocorrência'),
+        actions: const [ThemeSelectorButton()],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -138,18 +141,22 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
               children: [
                 if (!isAuthenticated)
                   Card(
-                    color: const Color(0xFFFFFBEB),
+                    color: colors.tertiaryContainer,
                     margin: const EdgeInsets.only(bottom: 16),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
-                          const Icon(Icons.lock_outline, color: AppTheme.accentAmber),
+                          Icon(Icons.lock_outline, color: colors.onTertiaryContainer),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'O endpoint POST /api/ocorrencias exige autenticação JWT no Spring Security.',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              'Entre na sua conta para publicar uma ocorrência.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: colors.onTertiaryContainer,
+                              ),
                             ),
                           ),
                           TextButton(
@@ -168,20 +175,25 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
+                          Text(
                             'Relato de Mobilidade e Acessibilidade',
                             style: TextStyle(
                               fontSize: 19,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B),
+                              color: colors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            'Suas informações ajudam outros cidadãos e pessoas com deficiência (PcD) em tempo real.',
-                            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                          Text(
+                            'Compartilhe detalhes para ajudar outras pessoas a se deslocarem com mais segurança.',
+                            style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
                           ),
                           const SizedBox(height: 20),
+                          const _FormSectionHeading(
+                            title: 'Sobre o problema',
+                            icon: Icons.report_outlined,
+                          ),
+                          const SizedBox(height: 12),
 
                           // Campo: Título (Validação alinhada ao @Size(min=3, max=120) do Java)
                           TextFormField(
@@ -264,6 +276,12 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
                           ),
                           const SizedBox(height: 16),
 
+                          const _FormSectionHeading(
+                            title: 'Localização e acessibilidade',
+                            icon: Icons.place_outlined,
+                          ),
+                          const SizedBox(height: 12),
+
                           // Campos opcionais de identificação do Ônibus
                           TextFormField(
                             controller: _prefixoVeiculoController,
@@ -286,7 +304,7 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
                               style: TextStyle(fontSize: 12),
                             ),
                             value: _afetaAcessibilidade,
-                            activeThumbColor: AppTheme.secondaryTeal,
+                            activeThumbColor: colors.secondary,
                             onChanged: (val) => setState(() => _afetaAcessibilidade = val),
                           ),
                           const SizedBox(height: 20),
@@ -303,7 +321,7 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
                                     ),
                                   )
                                 : const Icon(Icons.send),
-                            label: Text(_isSaving ? 'Enviando para API Java...' : 'Publicar Ocorrência'),
+                            label: Text(_isSaving ? 'Enviando ocorrência...' : 'Publicar Ocorrência'),
                           ),
                         ],
                       ),
@@ -314,6 +332,33 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FormSectionHeading extends StatelessWidget {
+  final String title;
+  final IconData icon;
+
+  const _FormSectionHeading({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colors.primary),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
       ),
     );
   }

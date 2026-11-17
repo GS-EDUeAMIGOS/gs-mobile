@@ -48,12 +48,13 @@ class OccurrenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final gravidadeCor = _gravidadeColor(ocorrencia.gravidade);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -69,20 +70,20 @@ class OccurrenceCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      color: colors.primary.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(_tipoIcon(ocorrencia.tipo), size: 16, color: AppTheme.primaryBlue),
+                        Icon(_tipoIcon(ocorrencia.tipo), size: 16, color: colors.primary),
                         const SizedBox(width: 6),
                         Text(
                           ocorrencia.tipo.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryBlue,
+                            color: colors.primary,
                           ),
                         ),
                       ],
@@ -91,7 +92,7 @@ class OccurrenceCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: gravidadeCor.withValues(alpha: 0.12),
+                      color: gravidadeCor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -107,20 +108,20 @@ class OccurrenceCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.secondaryTeal.withValues(alpha: 0.15),
+                        color: colors.secondary.withValues(alpha: 0.16),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.accessible, size: 14, color: AppTheme.secondaryTeal),
-                          SizedBox(width: 4),
+                          Icon(Icons.accessible, size: 14, color: colors.secondary),
+                          const SizedBox(width: 4),
                           Text(
                             'Impacto PcD',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.secondaryTeal,
+                              color: colors.secondary,
                             ),
                           ),
                         ],
@@ -133,10 +134,10 @@ class OccurrenceCard extends StatelessWidget {
               // Título da Ocorrência
               Text(
                 ocorrencia.titulo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
+                  color: colors.onSurface,
                 ),
               ),
               const SizedBox(height: 6),
@@ -146,9 +147,9 @@ class OccurrenceCard extends StatelessWidget {
                 ocorrencia.descricao,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF475569),
+                  color: colors.onSurfaceVariant,
                   height: 1.35,
                 ),
               ),
@@ -158,33 +159,33 @@ class OccurrenceCard extends StatelessWidget {
               Row(
                 children: [
                   if (ocorrencia.prefixoVeiculo != null && ocorrencia.prefixoVeiculo!.isNotEmpty) ...[
-                    const Icon(Icons.directions_bus, size: 16, color: Color(0xFF64748B)),
+                    Icon(Icons.directions_bus, size: 16, color: colors.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
                       'Ônibus nº ${ocorrencia.prefixoVeiculo}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
                     ),
                     const SizedBox(width: 12),
                   ] else if (ocorrencia.codigoLinha != null) ...[
-                    const Icon(Icons.route, size: 16, color: Color(0xFF64748B)),
+                    Icon(Icons.route, size: 16, color: colors.onSurfaceVariant),
                     const SizedBox(width: 4),
-                    const Text(
+                    Text(
                       'Linha SPTrans vinculada',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
                     ),
                     const SizedBox(width: 12),
                   ],
                   const Spacer(),
                   Text(
                     ocorrencia.status.label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryBlue,
+                      color: colors.primary,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, size: 18, color: AppTheme.primaryBlue),
+                  Icon(Icons.chevron_right, size: 18, color: colors.primary),
                 ],
               ),
             ],

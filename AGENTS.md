@@ -46,6 +46,11 @@ Os testes utilizam o pacote oficial `flutter_test`.
 - Testes de widgets (`testWidgets`) para verificar a renderização de elementos na tela e simulação de toques e digitação.
 - Execute sempre `flutter test` antes de submeter alterações.
 
+## Database & Backend Governance
+
+**Regra Estrita de Banco de Dados (Somente Consultoria / Zero Alteração Direta)**:
+- Se qualquer tarefa exigir alguma alteração no banco de dados (nova tabela, coluna, constraint, índice ou carga de dados), o agente **não deve alterar nada no banco ou nos scripts/entidades por conta própria**. Deve **apenas explicar qual alteração é necessária e o porquê técnico**.
+
 ## Educational Pair Programming & Architecture Mentorship (Mentoria e Explicação Didática)
 
 O desenvolvedor deste projeto é um programador iniciante em fase de aprendizado de desenvolvimento mobile, ecossistema Flutter/Dart, arquitetura de software e boas práticas. Além disso, **este projeto será apresentado e defendido perante professores e bancas acadêmicas (Global Solution FIAP 2TDS)**. Portanto, a velocidade de geração de código nunca deve atropelar o aprendizado: o desenvolvedor precisa ter total consciência e domínio de cada etapa, decisão e linha implementada.

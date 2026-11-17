@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 1 — Autenticação e Cadastro Cidadão)
 /// Responsabilidade Única: Autenticar o usuário no endpoint `/api/auth/login` ou
@@ -90,6 +91,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -101,36 +104,44 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Card(
+                      margin: EdgeInsets.zero,
+                      child: const ThemeSelectorButton(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   // Cabeçalho da Marca ViaCidadã
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue,
+                      color: colors.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Column(
+                    child: Column(
                       children: [
                         Icon(
                           Icons.directions_bus_filled,
                           size: 52,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
                           'ViaCidadã',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: colors.onPrimary,
                           ),
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Text(
                           'Mobilidade Urbana e Acessibilidade Cidadã (SPTrans)',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white70,
+                            color: colors.onPrimary.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -149,20 +160,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Text(
                               _isLoginMode ? 'Entrar na Plataforma' : 'Criar Conta Cidadã',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
+                                color: colors.onSurface,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               _isLoginMode
-                                  ? 'Autentique-se via JWT na API Java Spring Boot'
+                                  ? 'Acesse sua conta para acompanhar e registrar ocorrências'
                                   : 'Cadastre-se para registrar ocorrências e alertas PcD',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF64748B),
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -258,7 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : Text(_isLoginMode ? 'Entrar com JWT' : 'Concluir Cadastro'),
+                                  : Text(_isLoginMode ? 'Entrar' : 'Concluir Cadastro'),
                             ),
 
                             const SizedBox(height: 12),
@@ -283,24 +294,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Atalhos para preenchimento rápido durante a demonstração para os professores
                   Card(
-                    color: const Color(0xFFEFF6FF),
+                    color: colors.surfaceContainerHighest,
                     elevation: 0,
                     child: Padding(
                       padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(Icons.bolt, size: 18, color: AppTheme.primaryBlue),
-                              SizedBox(width: 6),
+                              Icon(Icons.bolt, size: 18, color: colors.primary),
+                              const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  'Contas de Demonstração (DataSeeder H2 Java):',
+                                  'Acesso rápido para demonstração:',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryBlue,
+                                    color: colors.primary,
                                   ),
                                 ),
                               ),
@@ -323,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               ActionChip(
                                 avatar: const Icon(Icons.public, size: 16),
-                                label: const Text('Explorar sem Login (GET Público)'),
+                                label: const Text('Explorar sem entrar'),
                                 onPressed: () {
                                   Navigator.pushReplacementNamed(context, '/home');
                                 },

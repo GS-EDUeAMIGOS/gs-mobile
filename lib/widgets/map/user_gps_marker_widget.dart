@@ -60,11 +60,55 @@ class _UserGpsMarkerWidgetState extends State<UserGpsMarkerWidget>
           final double haloAlpha = 0.34 - (0.20 * t);
 
           return SizedBox(
-            width: 48,
-            height: 48,
+            width: 92,
+            height: 86,
             child: Stack(
               alignment: Alignment.center,
               children: [
+                Positioned(
+                  top: 2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: MapTheme.surfaceDark.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: MapTheme.userGpsCyan,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.person_pin_circle,
+                          size: 11,
+                          color: MapTheme.userGpsCyan,
+                        ),
+                        SizedBox(width: 3),
+                        Text(
+                          'VOCÊ',
+                          style: TextStyle(
+                            color: MapTheme.textPrimary,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Container(
                   width: haloSize,
                   height: haloSize,
@@ -74,8 +118,8 @@ class _UserGpsMarkerWidgetState extends State<UserGpsMarkerWidget>
                   ),
                 ),
                 Container(
-                  width: 16,
-                  height: 16,
+                  width: 18,
+                  height: 18,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: MapTheme.userGpsCyan,
