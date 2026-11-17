@@ -228,11 +228,23 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
         _enquadrarRotaEOnibus();
       }
     } else if (mudouConjuntoParadas && widget.paradas.isNotEmpty) {
-      final centro = _calcularCentroInicial();
-      _moverCameraSePronto(centro, _currentZoom);
+      _atualizarRotasPorRuas();
+      if (widget.usuarioLat != null &&
+          widget.usuarioLon != null &&
+          widget.paradaSelecionada != null) {
+        _enquadrarUsuarioEPonto();
+      } else {
+        final centro = _calcularCentroInicial();
+        _moverCameraSePronto(centro, _currentZoom);
+      }
     } else if (oldWidget.usuarioLat != widget.usuarioLat ||
         oldWidget.usuarioLon != widget.usuarioLon) {
       _atualizarRotasPorRuas();
+      if (widget.usuarioLat != null &&
+          widget.usuarioLon != null &&
+          widget.paradaSelecionada != null) {
+        _enquadrarUsuarioEPonto();
+      }
     }
   }
 
@@ -398,7 +410,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
         pontoPos.latitude,
         pontoPos.longitude,
       );
-      if (dist >= 25.0 && dist <= 5000.0) {
+      if (dist >= 25.0 && dist <= 15000.0) {
         final bounds = LatLngBounds.fromPoints([userPos, pontoPos]);
         _mapController.fitCamera(
           CameraFit.bounds(

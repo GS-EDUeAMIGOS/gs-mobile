@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
+import '../widgets/app_back_button.dart';
 import '../widgets/occurrence_card.dart';
 import '../widgets/theme_selector_button.dart';
 
@@ -76,6 +77,7 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text('Ocorrências Cidadãs'),
         actions: [
           const ThemeSelectorButton(),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_back_button.dart';
 import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 4 — Detalhes da Ocorrência Cidadã)
@@ -80,6 +81,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
     if (args is! OcorrenciaModel) {
       return Scaffold(
         appBar: AppBar(
+          leading: const AppBackButton(fallbackRoute: '/occurrences'),
           title: const Text('Detalhes da Ocorrência'),
           actions: const [ThemeSelectorButton()],
         ),
@@ -95,6 +97,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(fallbackRoute: '/occurrences'),
         title: Text('Ocorrência #${ocorrencia.id ?? "-"}'),
         actions: [
           const ThemeSelectorButton(),

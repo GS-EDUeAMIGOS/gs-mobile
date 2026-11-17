@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../services/location_service.dart';
 import '../services/paradas_linha_fallback_helper.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_back_button.dart';
 import '../widgets/ponto_map_widget.dart';
 import '../widgets/theme_selector_button.dart';
 
@@ -222,7 +223,19 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
         );
       }
 
-      ParadaResumoModel? paradaDesembarqueRota = _rota?.paradaDestinoSugerida;
+      ParadaResumoModel? paradaDesembarqueRota;
+      for (final p in (_opcao?.passos ?? const <PassoRotaModel>[])) {
+        if (p.tipoPasso == 'DESEMBARQUE' && p.possuiCoordenadasParada) {
+          paradaDesembarqueRota = ParadaResumoModel(
+            codigoParada: p.codigoParada ?? 340099002,
+            nomeParada: p.nomeParada ?? p.local,
+            endereco: p.enderecoParada ?? '',
+            latitude: p.latitudeParada!,
+            longitude: p.longitudeParada!,
+          );
+        }
+      }
+      paradaDesembarqueRota ??= _rota?.paradaDestinoSugerida;
       if (paradaDesembarqueRota == null &&
           _rota?.localDestinoResolvido != null &&
           _rota!.localDestinoResolvido!.latitude != 0.0) {
@@ -372,6 +385,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
     if (_opcao == null || _passosOnibus.isEmpty) {
       return Scaffold(
         appBar: AppBar(
+          leading: const AppBackButton(fallbackRoute: '/route-planner'),
           title: const Text('Rota em Andamento'),
           actions: const [ThemeSelectorButton()],
         ),
@@ -503,6 +517,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(fallbackRoute: '/route-planner'),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

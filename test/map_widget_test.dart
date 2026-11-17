@@ -239,4 +239,36 @@ void main() {
       true,
     );
   });
+
+  test('Preserva paradaEmbarque real do usuario mesmo quando veiculos ativos estao a mais de 5km',
+      () async {
+    const paradaEmbarqueUsuario = ParadaResumoModel(
+      codigoParada: 777001,
+      nomeParada: 'PONTO ESQUINA USUARIO',
+      endereco: 'R. CON. XAVIER, 120',
+      latitude: -23.6114,
+      longitude: -46.5928,
+    );
+
+    const veiculoMuitoDistante = VeiculoPosicaoModel(
+      prefixo: '99123',
+      acessivelPcD: true,
+      horarioCaptura: '15:00',
+      latitude: -23.5614,
+      longitude: -46.6558,
+    );
+
+    final paradas = await ParadasLinhaFallbackHelper.garantirParadasDaLinha(
+      paradasIniciais: const [],
+      veiculos: const [veiculoMuitoDistante],
+      descricaoSentido: 'PAULISTA ➔ IPIRANGA',
+      letreiroCompleto: '476G-10',
+      paradaEmbarque: paradaEmbarqueUsuario,
+    );
+
+    expect(
+      paradas.any((p) => p.codigoParada == paradaEmbarqueUsuario.codigoParada),
+      true,
+    );
+  });
 }
