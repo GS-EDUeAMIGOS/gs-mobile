@@ -127,14 +127,46 @@ class StopMarkerWidget extends StatelessWidget {
     if (selecionada) {
       return Tooltip(
         message:
-            'Ponto Selecionado: ${parada.nomeParada} (${parada.ladoDaViaExplicado})\n${parada.endereco}',
+            'Seu Ponto: ${parada.nomeParada} (${parada.ladoDaViaExplicado})\n${parada.endereco}',
         child: GestureDetector(
           onTap: onTap,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                constraints: const BoxConstraints(maxWidth: 165),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                margin: const EdgeInsets.only(bottom: 2),
+                decoration: BoxDecoration(
+                  color: MapTheme.surfaceDark.withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: MapTheme.stopSelectedBlue,
+                    width: 1.4,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.hail_rounded,
+                      size: 11,
+                      color: MapTheme.userGpsCyan,
+                    ),
+                    SizedBox(width: 3),
+                    Text(
+                      'SEU PONTO',
+                      style: TextStyle(
+                        color: MapTheme.textPrimary,
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                constraints: const BoxConstraints(maxWidth: 175),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: MapTheme.stopSelectedBlue,

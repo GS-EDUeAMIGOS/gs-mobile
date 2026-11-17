@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ponto_map_widget.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 7 — Planejador de Viagem "Como Chegar" com GPS Automático e Busca por Locais)
 /// Responsabilidade Única:
@@ -224,10 +225,12 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     final localOrig = _rotaPlanejada?.localOrigemResolvido;
     final localDest = _rotaPlanejada?.localDestinoResolvido;
 
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Como Chegar (GPS + Locais)'),
         actions: [
+          const ThemeSelectorButton(),
           IconButton(
             tooltip: 'Recalcular rotas em tempo real',
             icon: const Icon(Icons.refresh),
@@ -243,33 +246,33 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              side: BorderSide(color: colors.outlineVariant),
             ),
             child: Padding(
               padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.route, color: AppTheme.primaryBlue, size: 24),
-                      SizedBox(width: 8),
+                      Icon(Icons.route, color: colors.primary, size: 24),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Para qual local você quer ir?',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: colors.onSurface,
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Sua localização GPS já vem preenchida como partida (você pode digitar outro lugar se preferir). Digite qualquer destino como "Hospital Heliópolis", "Shopping", "USP" ou avenida!',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
                   ),
                   const SizedBox(height: 16),
 
@@ -444,12 +447,14 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     width: 205,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                      color: isSelected
+                          ? colors.primaryContainer
+                          : colors.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                            ? AppTheme.primaryBlue
-                            : const Color(0xFFE2E8F0),
+                            ? colors.primary
+                            : colors.outlineVariant,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -459,14 +464,14 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppTheme.primaryBlue
-                                : AppTheme.primaryBlue.withValues(alpha: 0.1),
+                                ? colors.primary
+                                : colors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             item['icone'] as IconData,
                             size: 20,
-                            color: isSelected ? Colors.white : AppTheme.primaryBlue,
+                            color: isSelected ? colors.onPrimary : colors.primary,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -479,10 +484,10 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                                 item['nome'] as String,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1E293B),
+                                  color: colors.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -490,9 +495,9 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                                 item['subtitulo'] as String,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF64748B),
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
                             ],

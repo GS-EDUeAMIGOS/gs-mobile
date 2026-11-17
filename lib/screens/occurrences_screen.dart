@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
-import '../theme/app_theme.dart';
 import '../widgets/occurrence_card.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 3 — Listagem e Filtro de Ocorrências Cidadãs)
 /// Responsabilidade Única: Exibir todas as ocorrências paginadas do endpoint `GET /api/ocorrencias`
@@ -73,10 +73,12 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ocorrências Cidadãs'),
         actions: [
+          const ThemeSelectorButton(),
           IconButton(
             tooltip: 'Recarregar lista',
             icon: const Icon(Icons.refresh),
@@ -88,7 +90,7 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
         children: [
           // Barra de Filtros Dinâmicos (conectada à Specification do Spring Data JPA)
           Container(
-            color: Colors.white,
+            color: colors.surface,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,7 +134,7 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
                         avatar: const Icon(Icons.accessible, size: 16),
                         label: const Text('Somente Impacto PcD'),
                         selected: _somenteAcessibilidade,
-                        selectedColor: AppTheme.secondaryTeal.withValues(alpha: 0.2),
+                        selectedColor: colors.secondaryContainer,
                         onSelected: (val) {
                           setState(() => _somenteAcessibilidade = val);
                           _buscarOcorrencias();
@@ -182,12 +184,12 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.error_outline, size: 48, color: AppTheme.dangerRed),
+                              Icon(Icons.error_outline, size: 48, color: colors.error),
                               const SizedBox(height: 12),
                               Text(
                                 _errorMessage!,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: AppTheme.dangerRed),
+                                style: TextStyle(color: colors.error),
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
@@ -239,8 +241,8 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
           await Navigator.pushNamed(context, '/occurrence-form');
           _buscarOcorrencias();
         },
-        backgroundColor: AppTheme.primaryBlue,
-        foregroundColor: Colors.white,
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
         icon: const Icon(Icons.add),
         label: const Text('Nova Ocorrência'),
       ),

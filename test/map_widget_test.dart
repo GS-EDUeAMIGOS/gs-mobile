@@ -58,7 +58,7 @@ void main() {
 
   const onibusComum = MapaVeiculoPin(
     prefixo: '89999',
-    letreiro: '875A-10',
+    letreiro: '6450-10',
     acessivelPcD: false,
     horarioChegada: '14:42',
     latitude: -23.5620,
@@ -121,19 +121,19 @@ void main() {
     expect(find.text('Só PcD ♿'), findsOneWidget);
     expect(find.text('Trajeto/Linha'), findsOneWidget);
 
-    // Ambos os ônibus (PcD e comum) aparecem inicialmente
-    expect(find.text('81234'), findsOneWidget);
-    expect(find.text('89999'), findsOneWidget);
+    // Ambos os ônibus (PcD e comum) aparecem inicialmente exibindo o letreiro da linha
+    expect(find.text('875A-10'), findsOneWidget);
+    expect(find.text('6450-10'), findsOneWidget);
 
-    // Ativa o filtro "Só PcD ♿" -> oculta ônibus comum (89999) e mantém PcD (81234)
+    // Ativa o filtro "Só PcD ♿" -> oculta ônibus comum (6450-10) e mantém PcD (875A-10)
     await tester.tap(find.text('Só PcD ♿'));
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('81234'), findsOneWidget);
-    expect(find.text('89999'), findsNothing);
+    expect(find.text('875A-10'), findsOneWidget);
+    expect(find.text('6450-10'), findsNothing);
 
-    // Toca no ônibus PcD (81234) para abrir o card inspetor interno
-    await tester.tap(find.text('81234'));
+    // Toca no ônibus PcD (875A-10) para abrir o card inspetor interno
+    await tester.tap(find.text('875A-10'));
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.textContaining('Com Elevador PcD (Acessível)'), findsOneWidget);
@@ -208,7 +208,7 @@ void main() {
     // Avança a animação de interpolação (1000ms) sem falhar
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 600));
-    expect(find.text('81234'), findsOneWidget);
+    expect(find.text('875A-10'), findsOneWidget);
   });
 
   test('Garante paradas padrao do trajeto quando SPTrans retorna lista vazia para linha fora de corredor',

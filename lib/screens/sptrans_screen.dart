@@ -7,6 +7,7 @@ import '../services/paradas_linha_fallback_helper.dart';
 import '../theme/app_theme.dart';
 import '../theme/map_theme.dart';
 import '../widgets/ponto_map_widget.dart';
+import '../widgets/theme_selector_button.dart';
 
 /// Camada: Screens (Tela 6 — Radar SPTrans Olho Vivo em Tempo Real com Mapa Dark Transit UI)
 /// Responsabilidade Única: Oferecer ao cidadão uma experiência estilo Moovit com mapa
@@ -423,11 +424,14 @@ class _SptransScreenState extends State<SptransScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: MapTheme.surfaceDark,
+        backgroundColor: colors.surface,
+        foregroundColor: colors.onSurface,
         title: const Text('Radar & Mapa SPTrans'),
         actions: [
+          const ThemeSelectorButton(),
           IconButton(
             tooltip: _modoMapaExpandido
                 ? 'Alternar para Modo Clássico (Lista)'
@@ -438,11 +442,11 @@ class _SptransScreenState extends State<SptransScreen> {
               _modoMapaExpandido
                   ? Icons.view_agenda_outlined
                   : Icons.map_outlined,
-              color: MapTheme.userGpsCyan,
+              color: colors.primary,
             ),
           ),
           TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            style: TextButton.styleFrom(foregroundColor: colors.onSurface),
             onPressed: () => Navigator.pushNamed(context, '/route-planner'),
             icon: const Icon(Icons.route, color: Colors.white, size: 18),
             label: const Text(
@@ -525,9 +529,10 @@ class _SptransScreenState extends State<SptransScreen> {
                 snap: true,
                 snapSizes: const [0.16, 0.34, 0.65, 0.85],
                 builder: (context, scrollController) {
+                  final colors = Theme.of(context).colorScheme;
                   return Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: colors.surface,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(22),
                       ),
@@ -550,7 +555,7 @@ class _SptransScreenState extends State<SptransScreen> {
                             height: 4.5,
                             margin: const EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFCBD5E1),
+                              color: colors.outlineVariant,
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
@@ -560,16 +565,16 @@ class _SptransScreenState extends State<SptransScreen> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF2F2),
+                              color: colors.errorContainer,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0xFFFCA5A5),
+                                color: colors.error.withValues(alpha: 0.4),
                               ),
                             ),
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(
-                                color: AppTheme.dangerRed,
+                              style: TextStyle(
+                                color: colors.onErrorContainer,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -1912,16 +1917,17 @@ class _ModeTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primaryBlue : Colors.white,
+          color: selected ? colors.primary : colors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? AppTheme.primaryBlue : const Color(0xFFCBD5E1),
+            color: selected ? colors.primary : colors.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
@@ -1929,7 +1935,7 @@ class _ModeTabButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: selected ? Colors.white : AppTheme.primaryBlue,
+              color: selected ? colors.onPrimary : colors.primary,
               size: 22,
             ),
             const SizedBox(width: 8),
@@ -1942,14 +1948,16 @@ class _ModeTabButton extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      color: selected ? Colors.white : const Color(0xFF1E293B),
+                      color: selected ? colors.onPrimary : colors.onSurface,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: TextStyle(
                       fontSize: 11,
-                      color: selected ? Colors.white70 : const Color(0xFF64748B),
+                      color: selected
+                          ? colors.onPrimary.withValues(alpha: 0.78)
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ],

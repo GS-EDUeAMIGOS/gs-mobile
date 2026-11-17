@@ -50,11 +50,15 @@ class BusMarkerWidget extends StatelessWidget {
         veiculo.horarioChegada != null && veiculo.horarioChegada!.isNotEmpty
             ? '\nPrevisão/GPS: ${veiculo.horarioChegada}'
             : '';
-    final String linhaInfo =
-        veiculo.letreiro.isNotEmpty ? 'Linha ${veiculo.letreiro} • ' : '';
+    final String rotuloLinha = veiculo.letreiro.trim().isNotEmpty
+        ? veiculo.letreiro.trim()
+        : 'ÔNIBUS';
+    final String tituloTooltip = veiculo.letreiro.trim().isNotEmpty
+        ? 'Linha ${veiculo.letreiro.trim()}'
+        : 'Ônibus em circulação';
 
     return Tooltip(
-      message: '$linhaInfo' 'Ônibus ${veiculo.prefixo}\n$statusPcd$horarioInfo',
+      message: '$tituloTooltip\n$statusPcd$horarioInfo\nToque para detalhes',
       child: GestureDetector(
         onTap: onTap,
         child: Column(
@@ -62,7 +66,7 @@ class BusMarkerWidget extends StatelessWidget {
           children: [
             Container(
               padding: EdgeInsets.symmetric(
-                horizontal: compacto ? 6 : 8,
+                horizontal: compacto ? 7 : 9,
                 vertical: compacto ? 3 : 4,
               ),
               decoration: BoxDecoration(
@@ -88,40 +92,19 @@ class BusMarkerWidget extends StatelessWidget {
                     size: compacto ? 12 : 14,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    veiculo.prefixo.isEmpty ? 'BUS' : veiculo.prefixo,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: compacto ? 9.5 : 10.5,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                  if (!compacto && veiculo.letreiro.isNotEmpty) ...[
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.28),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          veiculo.letreiro,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                  Flexible(
+                    child: Text(
+                      rotuloLinha,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: compacto ? 10 : 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
