@@ -454,7 +454,7 @@ class ParadasLinhaFallbackHelper {
               ParadaResumoModel(
                 codigoParada: codigoSintetico,
                 nomeParada:
-                    'TRECHO $nomeEixo • ÔNIBUS #${v.prefixo}',
+                    'TRECHO $nomeEixo • LINHA ${letreiroCompleto ?? "SPTrans"}',
                 endereco:
                     'Posição em tempo real da linha ${letreiroCompleto ?? "SPTrans"}',
                 latitude: v.latitude,

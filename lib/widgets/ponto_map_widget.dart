@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/olho_vivo_model.dart';
+import '../services/street_route_service.dart';
 import '../theme/map_theme.dart';
 import '../theme/theme_controller.dart';
 import 'map/bus_marker_widget.dart';
@@ -147,6 +148,12 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
   // Veículo tocado no mapa para exibição rápida no rodapé interno
   MapaVeiculoPin? _veiculoEmDestaque;
 
+  // Traçados reais pelas ruas (OSRM / fallback suavizado)
+  List<LatLng> _trajetoRuas = const [];
+  List<LatLng> _caminhadaRuas = const [];
+  String _ultimaChaveTrajeto = '';
+  String _ultimaChaveCaminhada = '';
+
   // Interpolação suave das coordenadas dos ônibus (~1000ms)
   late final AnimationController _busAnimController;
   late final Animation<double> _busAnimCurve;
@@ -166,6 +173,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
       curve: Curves.easeInOutCubic,
     );
     _sincronizarPosicoesVeiculos(widget.veiculos, animar: false);
+    _atualizarRotasPorRuas();
   }
 
   @override
@@ -205,21 +213,26 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
     if (mudouParadaSelecionada &&
         widget.paradaSelecionada != null &&
         widget.paradaSelecionada!.possuiCoordenadas) {
-      _moverCameraSePronto(
-        LatLng(
-          widget.paradaSelecionada!.latitude,
-          widget.paradaSelecionada!.longitude,
-        ),
-        math.max(_currentZoom, MapTheme.defaultZoom),
-      );
+      _atualizarRotasPorRuas();
+      _enquadrarUsuarioEPonto();
     } else if (mudouTrajeto &&
         (widget.paradasTrajetoLinha?.where((p) => p.possuiCoordenadas).length ??
                 0) >=
             2) {
-      _enquadrarRotaEOnibus();
+      _atualizarRotasPorRuas();
+      if (widget.usuarioLat != null &&
+          widget.usuarioLon != null &&
+          widget.paradaSelecionada != null) {
+        _enquadrarUsuarioEPonto();
+      } else {
+        _enquadrarRotaEOnibus();
+      }
     } else if (mudouConjuntoParadas && widget.paradas.isNotEmpty) {
       final centro = _calcularCentroInicial();
       _moverCameraSePronto(centro, _currentZoom);
+    } else if (oldWidget.usuarioLat != widget.usuarioLat ||
+        oldWidget.usuarioLon != widget.usuarioLon) {
+      _atualizarRotasPorRuas();
     }
   }
 
@@ -362,18 +375,49 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
   }
 
   void _centralizarNoUsuarioOuPonto() {
-    if (widget.usuarioLat != null &&
+    _enquadrarUsuarioEPonto();
+  }
+
+  void _enquadrarUsuarioEPonto() {
+    final temUser = widget.usuarioLat != null &&
         widget.usuarioLon != null &&
         widget.usuarioLat != 0.0 &&
-        widget.usuarioLon != 0.0) {
-      _moverCameraSePronto(
-        LatLng(widget.usuarioLat!, widget.usuarioLon!),
-        16.2,
+        widget.usuarioLon != 0.0;
+    final temPonto = widget.paradaSelecionada != null &&
+        widget.paradaSelecionada!.possuiCoordenadas;
+
+    if (temUser && temPonto && _mapReady) {
+      final userPos = LatLng(widget.usuarioLat!, widget.usuarioLon!);
+      final pontoPos = LatLng(
+        widget.paradaSelecionada!.latitude,
+        widget.paradaSelecionada!.longitude,
       );
+      final dist = PontoMapWidget.calcularDistanciaMetros(
+        userPos.latitude,
+        userPos.longitude,
+        pontoPos.latitude,
+        pontoPos.longitude,
+      );
+      if (dist >= 25.0 && dist <= 5000.0) {
+        final bounds = LatLngBounds.fromPoints([userPos, pontoPos]);
+        _mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.all(68),
+            maxZoom: 16.8,
+            minZoom: MapTheme.minZoom,
+          ),
+        );
+        if (mounted) {
+          setState(() => _currentZoom = _mapController.camera.zoom);
+        }
+        return;
+      }
+      _moverCameraSePronto(pontoPos, 16.2);
       return;
     }
-    if (widget.paradaSelecionada != null &&
-        widget.paradaSelecionada!.possuiCoordenadas) {
+
+    if (temPonto) {
       _moverCameraSePronto(
         LatLng(
           widget.paradaSelecionada!.latitude,
@@ -383,7 +427,71 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
       );
       return;
     }
+    if (temUser) {
+      _moverCameraSePronto(
+        LatLng(widget.usuarioLat!, widget.usuarioLon!),
+        16.2,
+      );
+      return;
+    }
     _moverCameraSePronto(_calcularCentroInicial(), MapTheme.defaultZoom);
+  }
+
+  Future<void> _atualizarRotasPorRuas() async {
+    // 1. Trajeto da linha de ônibus pelas ruas reais
+    final waypointsTrajeto = (widget.paradasTrajetoLinha ?? const <ParadaResumoModel>[])
+        .where((p) => p.possuiCoordenadas)
+        .map((p) => LatLng(p.latitude, p.longitude))
+        .toList();
+
+    final chaveTrajeto = waypointsTrajeto
+        .map((p) => '${p.latitude.toStringAsFixed(4)},${p.longitude.toStringAsFixed(4)}')
+        .join('|');
+
+    if (chaveTrajeto != _ultimaChaveTrajeto) {
+      _ultimaChaveTrajeto = chaveTrajeto;
+      if (waypointsTrajeto.length < 2) {
+        if (mounted && _trajetoRuas.isNotEmpty) {
+          setState(() => _trajetoRuas = const []);
+        }
+      } else {
+        final rota = await StreetRouteService.instance.obterRotaPorRuas(
+          waypoints: waypointsTrajeto,
+          profile: StreetRouteProfile.driving,
+        );
+        if (mounted && _ultimaChaveTrajeto == chaveTrajeto) {
+          setState(() => _trajetoRuas = rota);
+        }
+      }
+    }
+
+    // 2. Caminho a pé pelas ruas do usuário até o ponto de embarque
+    final temUser = widget.usuarioLat != null &&
+        widget.usuarioLon != null &&
+        widget.usuarioLat != 0.0 &&
+        widget.usuarioLon != 0.0;
+    final ponto = widget.paradaSelecionada;
+    final chaveCaminhada = (temUser && ponto != null && ponto.possuiCoordenadas)
+        ? '${widget.usuarioLat!.toStringAsFixed(4)},${widget.usuarioLon!.toStringAsFixed(4)}->'
+            '${ponto.latitude.toStringAsFixed(4)},${ponto.longitude.toStringAsFixed(4)}'
+        : '';
+
+    if (chaveCaminhada != _ultimaChaveCaminhada) {
+      _ultimaChaveCaminhada = chaveCaminhada;
+      if (chaveCaminhada.isEmpty) {
+        if (mounted && _caminhadaRuas.isNotEmpty) {
+          setState(() => _caminhadaRuas = const []);
+        }
+      } else {
+        final caminhada = await StreetRouteService.instance.obterRotaCaminhada(
+          origemUsuario: LatLng(widget.usuarioLat!, widget.usuarioLon!),
+          destinoPonto: LatLng(ponto!.latitude, ponto.longitude),
+        );
+        if (mounted && _ultimaChaveCaminhada == chaveCaminhada) {
+          setState(() => _caminhadaRuas = caminhada);
+        }
+      }
+    }
   }
 
   void _enquadrarRotaEOnibus() {
@@ -470,12 +578,16 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
     final veiculosTodosComGps =
         widget.veiculos.where((v) => v.possuiCoordenadas).toList();
 
-    // Pontos da polyline da linha
+    // Pontos da polyline da linha (prioriza o traçado real pelas ruas)
     final List<LatLng> pontosTrajeto = _showTrajeto
-        ? (widget.paradasTrajetoLinha ?? const <ParadaResumoModel>[])
-            .where((p) => p.possuiCoordenadas)
-            .map((p) => LatLng(p.latitude, p.longitude))
-            .toList()
+        ? (_trajetoRuas.length >= 2
+            ? _trajetoRuas
+            : StreetRouteService.gerarTrajetoFallback(
+                (widget.paradasTrajetoLinha ?? const <ParadaResumoModel>[])
+                    .where((p) => p.possuiCoordenadas)
+                    .map((p) => LatLng(p.latitude, p.longitude))
+                    .toList(),
+              ))
         : const [];
 
     // Calcula a distância do ônibus mais próximo até a parada selecionada
@@ -554,8 +666,8 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
           // 1. Cabeçalho Dark Transit UI
           _buildHeader(paradaAtual, veiculosTodosComGps),
 
-          // 2. Faixa de Distância do GPS do Celular até o Ponto Selecionado
-          if (!widget.modoNavegacaoSimples && distanciaUsuarioAtePonto != null)
+          // 2. Faixa de Distância do GPS do Celular até o Ponto Selecionado (sempre visível para orientar a caminhada)
+          if (distanciaUsuarioAtePonto != null)
             _buildDistanciaUsuarioBanner(distanciaUsuarioAtePonto, paradaAtual),
 
           // 2b. Faixa de Verificação: "Estou no ponto certo para o meu ônibus?"
@@ -819,9 +931,9 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
           Expanded(
             child: Text(
               estaNoPonto
-                  ? 'GPS: Você já está neste ponto! (${distanciaUsuarioAtePonto.round()}m)'
-                  : 'GPS: Você está a ${PontoMapWidget.formatarDistancia(distanciaUsuarioAtePonto)} '
-                      '(~${math.max(1, (distanciaUsuarioAtePonto / 75).ceil())} min a pé até ${paradaAtual?.nomeParada ?? "o ponto"})',
+                  ? 'Você já está no seu ponto! (${distanciaUsuarioAtePonto.round()}m)'
+                  : 'Caminhe ${PontoMapWidget.formatarDistancia(distanciaUsuarioAtePonto)} '
+                      '(~${math.max(1, (distanciaUsuarioAtePonto / 75).ceil())} min) até ${paradaAtual?.nomeParada ?? "seu ponto"}',
               style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
@@ -979,11 +1091,14 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                 : const Color(0xFFE2E8F0),
             onMapReady: () {
               _mapReady = true;
-              if (pontosTrajeto.length >= 2) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) _enquadrarRotaEOnibus();
-                });
-              }
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                if (temGpsUsuario && paradaAtual != null && paradaAtual.possuiCoordenadas) {
+                  _enquadrarUsuarioEPonto();
+                } else if (pontosTrajeto.length >= 2) {
+                  _enquadrarRotaEOnibus();
+                }
+              });
             },
             onTap: (_, _) {
               if (_veiculoEmDestaque != null) {
@@ -1017,39 +1132,24 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                 ],
               ),
 
-            // Camada 3: Vetor tracejado conectando ônibus em aproximação ao ponto selecionado
-            if (_showTrajeto &&
-                paradaAtual != null &&
-                paradaAtual.possuiCoordenadas &&
-                veiculosVisiveis.isNotEmpty &&
-                (!widget.modoNavegacaoSimples || onibusMaisProximo != null))
-              AnimatedBuilder(
-                animation: _busAnimCurve,
-                builder: (context, _) {
-                  final pontoAlvo =
-                      LatLng(paradaAtual.latitude, paradaAtual.longitude);
-                  final List<MapaVeiculoPin> alvosVetor =
-                      widget.modoNavegacaoSimples
-                          ? [onibusMaisProximo!]
-                          : veiculosVisiveis.take(8).toList();
-                  return PolylineLayer(
-                    polylines: alvosVetor
-                        .map(
-                          (v) => Polyline(
-                            points: [_obterPosicaoInterpolada(v), pontoAlvo],
-                            strokeWidth: 2.3,
-                            color: (v.acessivelPcD
-                                    ? MapTheme.busPcdEmerald
-                                    : MapTheme.userGpsCyan)
-                                .withValues(alpha: 0.75),
-                            pattern: StrokePattern.dashed(
-                              segments: const [8, 6],
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  );
-                },
+            // Camada 3: Caminho a pé pelas ruas ligando VOCÊ até SEU PONTO
+            if (_caminhadaRuas.length >= 2)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: _caminhadaRuas,
+                    strokeWidth: 6.0,
+                    color: MapTheme.surfaceDark.withValues(alpha: 0.75),
+                  ),
+                  Polyline(
+                    points: _caminhadaRuas,
+                    strokeWidth: 3.4,
+                    color: MapTheme.userGpsCyan,
+                    pattern: StrokePattern.dashed(
+                      segments: const [7, 6],
+                    ),
+                  ),
+                ],
               ),
 
             // Camada 4: Localização GPS do Usuário (#38BDF8 pulsante + etiqueta VOCÊ)
@@ -1132,14 +1232,12 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                   _moverCameraSePronto(center, nextZoom);
                 },
               ),
-              if (!widget.modoNavegacaoSimples) ...[
-                const SizedBox(height: 6),
-                _MapDarkControlButton(
-                  icon: Icons.my_location,
-                  tooltip: 'Centralizar no meu GPS / Ponto',
-                  onTap: _centralizarNoUsuarioOuPonto,
-                ),
-              ],
+              const SizedBox(height: 6),
+              _MapDarkControlButton(
+                icon: Icons.my_location,
+                tooltip: 'Focar em Você e no Seu Ponto',
+                onTap: _enquadrarUsuarioEPonto,
+              ),
               const SizedBox(height: 6),
               _MapDarkControlButton(
                 icon: Icons.center_focus_strong,
@@ -1320,7 +1418,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${veiculo.letreiro.isNotEmpty ? "Linha ${veiculo.letreiro} • " : ""}Ônibus ${veiculo.prefixo}$distTxt',
+                  '${veiculo.letreiro.isNotEmpty ? "Linha ${veiculo.letreiro}" : "Ônibus em circulação"}$distTxt',
                   style: const TextStyle(
                     color: MapTheme.textPrimary,
                     fontSize: 12,
@@ -1329,7 +1427,8 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                 ),
                 Text(
                   '${veiculo.acessivelPcD ? "Com Elevador PcD (Acessível)" : "Sem Elevador PcD"}'
-                  '${_sufixoHorarioAmigavel(veiculo.horarioChegada)}',
+                  '${_sufixoHorarioAmigavel(veiculo.horarioChegada)}'
+                  '${veiculo.prefixo.isNotEmpty ? " • Carro nº ${veiculo.prefixo} (p/ denúncia)" : ""}',
                   style: TextStyle(
                     color: veiculo.acessivelPcD
                         ? const Color(0xFF6EE7B7)
@@ -1380,7 +1479,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Ônibus nº ${onibusMaisProximo.prefixo} está a '
+              '${onibusMaisProximo.letreiro.isNotEmpty ? "Linha ${onibusMaisProximo.letreiro}" : "Próximo ônibus"} está a '
               '${PontoMapWidget.formatarDistancia(menorDistanciaMetros)}'
               '${_sufixoHorarioAmigavel(onibusMaisProximo.horarioChegada)}',
               style: const TextStyle(

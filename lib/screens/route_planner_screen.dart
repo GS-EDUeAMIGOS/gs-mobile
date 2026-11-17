@@ -1072,27 +1072,6 @@ class _StepTimelineItem extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (passo.proximoPrefixo != null &&
-                            passo.proximoPrefixo!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFCBD5E1)),
-                            ),
-                            child: Text(
-                              'Próximo Ônibus: nº ${passo.proximoPrefixo}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                          ),
                         Text(
                           '${passo.veiculosAcessiveisPcD} com elevador PcD',
                           style: const TextStyle(

@@ -1401,7 +1401,6 @@ class _SptransScreenState extends State<SptransScreen> {
                             ),
                             if (proximoVeiculo != null)
                               Text(
-                                'Ônibus ${proximoVeiculo.prefixo} • '
                                 '${proximoVeiculo.acessivelPcD ? "♿ Com Elevador PcD" : "Sem Elevador PcD"}'
                                 '${distanciaMetros != null ? " • ${PontoMapWidget.formatarDistancia(distanciaMetros)}" : ""}',
                                 style: TextStyle(

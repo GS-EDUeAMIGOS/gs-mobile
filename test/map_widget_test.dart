@@ -111,8 +111,12 @@ void main() {
     // Avança alguns frames sem depender de pumpAndSettle por causa do pulso contínuo de GPS
     await tester.pump(const Duration(milliseconds: 200));
 
-    // Cabeçalho e faixa de confirmação da linha
+    // Cabeçalho, faixa de caminhada até o ponto e confirmação da linha
     expect(find.textContaining('PONTO CONFIRMADO'), findsOneWidget);
+    expect(find.text('VOCÊ'), findsOneWidget);
+    expect(find.text('SEU PONTO'), findsOneWidget);
+    expect(find.textContaining('está a'), findsOneWidget);
+    expect(find.textContaining('Ônibus nº'), findsNothing);
 
     // Chips de filtros de camada no mapa
     expect(find.text('Pontos'), findsOneWidget);
