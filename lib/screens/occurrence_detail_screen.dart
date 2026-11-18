@@ -8,7 +8,7 @@ import '../widgets/theme_selector_button.dart';
 /// Camada: Screens (Tela 4 — Detalhes da Ocorrência Cidadã)
 /// Responsabilidade Única: Receber um objeto `OcorrenciaModel` via passagem de parâmetros
 /// na rota (`ModalRoute.of(context)!.settings.arguments`), exibir todos os seus metadados
-/// e permitir excluir o registro (`DELETE /api/ocorrencias/{id}`) caso o usuário esteja autenticado.
+/// e permitir excluir o registro (`DELETE /api/ocorrencias/{id}`) somente para administradores (`ROLE_ADMIN`).
 class OccurrenceDetailScreen extends StatefulWidget {
   const OccurrenceDetailScreen({super.key});
 
@@ -104,7 +104,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
     }
 
     final ocorrencia = args;
-    final isAuthenticated = ApiService.instance.isAuthenticated;
+    final isAdmin = ApiService.instance.isAdmin;
     final colors = Theme.of(context).colorScheme;
     final linha = ocorrencia.linhaEmDestaque;
 
@@ -114,7 +114,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
         title: const Text('Detalhes do Relato'),
         actions: [
           const ThemeSelectorButton(),
-          if (isAuthenticated && ocorrencia.id != null)
+          if (isAdmin && ocorrencia.id != null)
             IconButton(
               tooltip: 'Excluir ocorrência',
               icon: _isDeleting

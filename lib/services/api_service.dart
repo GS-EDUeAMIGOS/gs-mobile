@@ -41,6 +41,7 @@ class ApiService {
   AuthUser? _currentUser;
   AuthUser? get currentUser => _currentUser;
   bool get isAuthenticated => _currentUser != null && _currentUser!.token.isNotEmpty;
+  bool get isAdmin => _currentUser?.isAdmin ?? false;
 
   // Cache leve em memória (TTL de 4 minutos) exclusivo para dados semi-estáticos de paradas.
   // Dados em tempo real (previsões de chegada e GPS dos veículos) NUNCA são cacheados.
@@ -370,6 +371,10 @@ class ApiService {
   }
 
   Future<void> removerOcorrencia(int id) async {
+    if (!isAdmin) {
+      throw Exception('Apenas administradores podem excluir ocorrências.');
+    }
+
     try {
       final uri = Uri.parse('$baseUrl/ocorrencias/$id');
       final response = await http.delete(uri, headers: _headers(includeAuth: true));
