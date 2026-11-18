@@ -70,7 +70,7 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Faça login primeiro para registrar uma ocorrência com Token JWT.'),
+          content: Text('Faça login primeiro para registrar uma ocorrência.'),
           backgroundColor: AppTheme.accentAmber,
           behavior: SnackBarBehavior.floating,
         ),
@@ -100,7 +100,7 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ocorrência registrada com sucesso no banco de dados!'),
+          content: Text('Ocorrência registrada com sucesso.'),
           backgroundColor: AppTheme.successGreen,
           behavior: SnackBarBehavior.floating,
         ),
@@ -130,7 +130,7 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
-        title: const Text('Registrar Nova Ocorrência'),
+        title: const Text('Nova Ocorrência'),
         actions: const [ThemeSelectorButton()],
       ),
       body: SingleChildScrollView(
@@ -288,8 +288,8 @@ class _OccurrenceFormScreenState extends State<OccurrenceFormScreen> {
                           TextFormField(
                             controller: _prefixoVeiculoController,
                             decoration: const InputDecoration(
-                              labelText: 'Número do Ônibus (pintado na porta/lateral)',
-                              hintText: 'Ex.: 51215 (opcional)',
+                              labelText: 'Prefixo do Ônibus (opcional)',
+                              hintText: 'Ex.: 51215 (número pintado na porta ou lateral)',
                               prefixIcon: Icon(Icons.directions_bus_outlined),
                             ),
                           ),

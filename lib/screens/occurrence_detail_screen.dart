@@ -19,6 +19,20 @@ class OccurrenceDetailScreen extends StatefulWidget {
 class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
   bool _isDeleting = false;
 
+  String _formatarDataRegistro(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      return raw.replaceAll('T', ' ').split('.').first;
+    }
+    final local = parsed.toLocal();
+    final d = local.day.toString().padLeft(2, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final y = local.year.toString();
+    final hh = local.hour.toString().padLeft(2, '0');
+    final mm = local.minute.toString().padLeft(2, '0');
+    return '$d/$m/$y às $hh:$mm';
+  }
+
   Future<void> _confirmarExclusao(OcorrenciaModel ocorrencia) async {
     if (ocorrencia.id == null) return;
 
@@ -55,7 +69,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ocorrência removida com sucesso!'),
+          content: Text('Ocorrência removida com sucesso.'),
           backgroundColor: AppTheme.successGreen,
           behavior: SnackBarBehavior.floating,
         ),
@@ -98,12 +112,12 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(fallbackRoute: '/occurrences'),
-        title: Text('Ocorrência #${ocorrencia.id ?? "-"}'),
+        title: const Text('Detalhes do Relato'),
         actions: [
           const ThemeSelectorButton(),
           if (isAuthenticated && ocorrencia.id != null)
             IconButton(
-              tooltip: 'Excluir ocorrência (Requer JWT)',
+              tooltip: 'Excluir ocorrência',
               icon: _isDeleting
                   ? const SizedBox(
                       width: 18,
@@ -182,18 +196,18 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                         _InfoRow(
                           icon: Icons.person_outline,
                           label: 'Reportado por',
-                          value: ocorrencia.nomeUsuario ?? 'Usuário #${ocorrencia.usuarioId}',
+                          value: ocorrencia.nomeUsuario ?? 'Cidadão cadastrado',
                         ),
                         if (ocorrencia.codigoLinha != null)
                           _InfoRow(
                             icon: Icons.directions_bus,
-                            label: 'Código da Linha SPTrans (cl)',
+                            label: 'Linha SPTrans',
                             value: '${ocorrencia.codigoLinha}',
                           ),
                         if (ocorrencia.codigoParada != null)
                           _InfoRow(
                             icon: Icons.place_outlined,
-                            label: 'Código da Parada SPTrans (cp)',
+                            label: 'Parada SPTrans',
                             value: '${ocorrencia.codigoParada}',
                           ),
                         if (ocorrencia.prefixoVeiculo != null &&
@@ -207,7 +221,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                           _InfoRow(
                             icon: Icons.calendar_today_outlined,
                             label: 'Data de Registro',
-                            value: ocorrencia.criadoEm!.replaceAll('T', ' ').split('.').first,
+                            value: _formatarDataRegistro(ocorrencia.criadoEm!),
                           ),
                       ],
                     ),
@@ -220,6 +234,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.secondaryTeal,
+                      foregroundColor: Colors.white,
                     ),
                     onPressed: () {
                       Navigator.pushNamed(
@@ -229,9 +244,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                       );
                     },
                     icon: const Icon(Icons.radar),
-                    label: Text(
-                      'Consultar Veículos em Tempo Real da Linha #${ocorrencia.codigoLinha}',
-                    ),
+                    label: const Text('Ver Ônibus desta Linha no Mapa'),
                   ),
               ],
             ),

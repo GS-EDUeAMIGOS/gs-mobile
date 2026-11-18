@@ -16,15 +16,15 @@ class OccurrenceCard extends StatelessWidget {
     this.onTap,
   });
 
-  Color _gravidadeColor(NivelGravidade gravidade) {
+  Color _gravidadeColor(NivelGravidade gravidade, BuildContext context) {
     switch (gravidade) {
       case NivelGravidade.CRITICA:
       case NivelGravidade.ALTA:
-        return AppTheme.dangerRed;
+        return AppTheme.adaptiveDanger(context);
       case NivelGravidade.MEDIA:
-        return AppTheme.accentAmber;
+        return AppTheme.adaptiveWarning(context);
       case NivelGravidade.BAIXA:
-        return AppTheme.secondaryTeal;
+        return Theme.of(context).colorScheme.secondary;
     }
   }
 
@@ -49,7 +49,7 @@ class OccurrenceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final gravidadeCor = _gravidadeColor(ocorrencia.gravidade);
+    final gravidadeCor = _gravidadeColor(ocorrencia.gravidade, context);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -61,72 +61,64 @@ class OccurrenceCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Linha superior: Badges de Tipo, Gravidade e Acessibilidade
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
+              // Linha superior: no máximo 2 indicadores (Categoria à esquerda + Gravidade/PcD à direita)
+              Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(_tipoIcon(ocorrencia.tipo), size: 16, color: colors.primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          ocorrencia.tipo.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: colors.primary,
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_tipoIcon(ocorrencia.tipo), size: 15, color: colors.primary),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              ocorrencia.tipo.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: colors.primary,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: gravidadeCor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      'Gravidade: ${ocorrencia.gravidade.label}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: gravidadeCor,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (ocorrencia.afetaAcessibilidade) ...[
+                          Icon(Icons.accessible, size: 14, color: gravidadeCor),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          ocorrencia.afetaAcessibilidade
+                              ? 'PcD • ${ocorrencia.gravidade.label}'
+                              : 'Gravidade ${ocorrencia.gravidade.label}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: gravidadeCor,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  if (ocorrencia.afetaAcessibilidade)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colors.secondary.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.accessible, size: 14, color: colors.secondary),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Impacto PcD',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: colors.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                 ],
               ),
               const SizedBox(height: 12),

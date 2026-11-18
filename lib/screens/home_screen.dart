@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ViaCidadã • Painel'),
+        title: const Text('ViaCidadã'),
         actions: [
           const ThemeSelectorButton(),
           IconButton(
@@ -77,9 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
       body: RefreshIndicator(
         onRefresh: _carregarPainel,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
           children: [
-            // Banner de Boas-Vindas e Status de Autenticação JWT
+            // Banner de Boas-Vindas
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user != null ? 'Olá, ${user.nome}!' : 'Modo Visitante (Leitura)',
+                              user != null ? 'Olá, ${user.nome}' : 'Modo Visitante (Leitura)',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             Text(
                               user != null
-                                  ? '${user.email} • Sessão JWT Ativa'
+                                  ? user.email
                                   : 'Faça login para registrar novas ocorrências',
                               style: const TextStyle(
                                 fontSize: 13,
@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Para onde você quer ir? (Ver melhor ônibus / baldeação)',
+                                'Para onde você quer ir?',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -193,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ].map((d) => Padding(
                                 padding: const EdgeInsets.only(right: 6),
                                 child: ActionChip(
-                                  avatar: const Icon(Icons.place, size: 14, color: AppTheme.primaryBlue),
+                                  avatar: Icon(Icons.place, size: 14, color: colors.primary),
                                   label: Text(
                                     d['label']!,
                                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
@@ -233,19 +233,22 @@ class _HomeScreenState extends State<HomeScreen> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 600;
-                return GridView.count(
-                  crossAxisCount: isWide ? 4 : 2,
+                final isDark = AppTheme.isDarkMode(context);
+                return GridView(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: isWide ? 1.5 : 1.15,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: isWide ? 4 : 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: isWide ? 142 : 156,
+                  ),
                   children: [
                     _QuickActionCard(
                       icon: Icons.route,
                       title: 'Como Chegar',
                       subtitle: 'Melhor ônibus e baldeação',
-                      color: AppTheme.primaryBlue,
+                      color: colors.primary,
                       onTap: () {
                         Navigator.pushNamed(context, '/route-planner');
                       },
@@ -254,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.radar,
                       title: 'Radar no Ponto',
                       subtitle: 'Previsão de chegada SPTrans',
-                      color: AppTheme.secondaryTeal,
+                      color: colors.secondary,
                       onTap: () {
                         Navigator.pushNamed(context, '/sptrans');
                       },
@@ -263,7 +266,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.campaign_outlined,
                       title: 'Ocorrências Cidadãs',
                       subtitle: 'Filtrar e consultar relatos',
-                      color: const Color(0xFF6366F1),
+                      color: isDark
+                          ? const Color(0xFFA5B4FC)
+                          : const Color(0xFF4F46E5),
                       onTap: () async {
                         await Navigator.pushNamed(context, '/occurrences');
                         _carregarPainel();
@@ -273,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: Icons.add_location_alt_outlined,
                       title: 'Nova Ocorrência',
                       subtitle: 'Relatar falha ou elevador PcD',
-                      color: AppTheme.accentAmber,
+                      color: AppTheme.adaptiveWarning(context),
                       onTap: () async {
                         await Navigator.pushNamed(context, '/occurrence-form');
                         _carregarPainel();
@@ -390,16 +395,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.pushNamed(context, '/occurrence-form');
-          _carregarPainel();
-        },
-        backgroundColor: colors.primary,
-        foregroundColor: colors.onPrimary,
-        icon: const Icon(Icons.add_comment),
-        label: const Text('Relatar Problema'),
-      ),
     );
   }
 }
@@ -443,6 +438,8 @@ class _QuickActionCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,

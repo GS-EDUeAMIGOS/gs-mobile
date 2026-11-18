@@ -382,6 +382,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     if (_opcao == null || _passosOnibus.isEmpty) {
       return Scaffold(
         appBar: AppBar(
@@ -395,16 +396,20 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.directions_bus_outlined,
                   size: 56,
-                  color: Color(0xFF64748B),
+                  color: colors.onSurfaceVariant,
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Nenhuma linha de ônibus encontrada nesta rota.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: colors.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -590,7 +595,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'AO VIVO • ${_formatarHoraAtualizacao()}',
+                            'AO VIVO — ${_formatarHoraAtualizacao()}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -664,7 +669,9 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
                     child: ChoiceChip(
                       selected: ativo,
                       onSelected: (_) => _trocarOnibus(index),
-                      selectedColor: AppTheme.primaryBlue,
+                      selectedColor: colors.primary,
+                      backgroundColor: colors.surfaceContainerHighest,
+                      checkmarkColor: colors.onPrimary,
                       label: SizedBox(
                         width: double.infinity,
                         child: Text(
@@ -672,7 +679,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: ativo ? Colors.white : const Color(0xFF0F172A),
+                            color: ativo ? colors.onPrimary : colors.onSurface,
                           ),
                         ),
                       ),
@@ -690,14 +697,14 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
+                color: colors.errorContainer,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFCA5A5)),
+                border: Border.all(color: colors.error.withValues(alpha: 0.45)),
               ),
               child: Text(
                 'Não foi possível atualizar a posição ao vivo agora: $_erroVeiculos',
-                style: const TextStyle(
-                  color: Color(0xFF991B1B),
+                style: TextStyle(
+                  color: colors.onErrorContainer,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -731,15 +738,15 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
           // 5. Lista Estilo Moovit com TODAS as Paradas da Linha
           Row(
             children: [
-              const Icon(Icons.route, color: AppTheme.primaryBlue, size: 20),
+              Icon(Icons.route, color: colors.primary, size: 20),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Paradas da Linha (Ao Vivo)',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: colors.onSurface,
                   ),
                 ),
               ),
@@ -748,7 +755,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600,
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -768,7 +775,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
                   children: [
                     Text(
                       _erroParadas!,
-                      style: const TextStyle(color: AppTheme.dangerRed),
+                      style: TextStyle(color: colors.error),
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
@@ -781,12 +788,12 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
               ),
             )
           else if (_paradasDaLinha.isEmpty)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(18),
+                padding: const EdgeInsets.all(18),
                 child: Text(
                   'A SPTrans não retornou a lista detalhada de paradas para este sentido no momento.',
-                  style: TextStyle(color: Color(0xFF64748B)),
+                  style: TextStyle(color: colors.onSurfaceVariant),
                 ),
               ),
             )
@@ -794,7 +801,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
-                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                side: BorderSide(color: colors.outlineVariant),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -879,8 +886,8 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
               label: const Text('Encerrar Rota'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                foregroundColor: AppTheme.dangerRed,
-                side: const BorderSide(color: AppTheme.dangerRed),
+                foregroundColor: AppTheme.adaptiveDanger(context),
+                side: BorderSide(color: AppTheme.adaptiveDanger(context)),
               ),
             ),
           ),
@@ -898,6 +905,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
     required double? distOnibusEmbarque,
     required ParadaResumoModel? paradaDesembarque,
   }) {
+    final colors = Theme.of(context).colorScheme;
     final nomeEmbarque = paradaEmbarque?.nomeParada ??
         passoAtivo.nomeParada ??
         passoAtivo.local;
@@ -911,7 +919,7 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
         final distFmt = distCaminhadaEmbarque < 1000
             ? '${distCaminhadaEmbarque.round()} m'
             : '${(distCaminhadaEmbarque / 1000).toStringAsFixed(1)} km';
-        subEmbarque = 'a $distFmt • ~$minPe min a pé';
+        subEmbarque = 'a $distFmt (~$minPe min a pé)';
       }
     } else {
       subEmbarque = 'Ponto inicial da sua viagem';
@@ -932,17 +940,18 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
         distFmt = 'a ${(distOnibusEmbarque / 1000).toStringAsFixed(1)} km';
       }
       final minBus = math.max(1, (distOnibusEmbarque / 300).ceil());
-      subOnibus = '$distFmt do embarque • ~$minBus min';
+      subOnibus = '$distFmt do embarque (~$minBus min)';
       badgeOnibus = _BadgeTag(
+        icon: onibusMaisProximo.acessivelPcD ? Icons.accessible : null,
         text: onibusMaisProximo.acessivelPcD
-            ? 'Acessível PcD ♿'
+            ? 'Acessível PcD'
             : 'Sem elevador',
         bgColor: onibusMaisProximo.acessivelPcD
-            ? const Color(0xFFDCFCE7)
-            : const Color(0xFFFEF3C7),
+            ? AppTheme.badgeBgSuccess(context)
+            : AppTheme.badgeBgWarning(context),
         textColor: onibusMaisProximo.acessivelPcD
-            ? const Color(0xFF166534)
-            : const Color(0xFFB45309),
+            ? AppTheme.adaptiveSuccess(context)
+            : AppTheme.adaptiveWarning(context),
       );
     } else {
       tituloOnibus = 'Aguardando ônibus';
@@ -962,8 +971,8 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
           valorPrincipal: nomeEmbarque,
           subtitulo: subEmbarque,
           icone: Icons.hail_rounded,
-          corDestaque: AppTheme.primaryBlue,
-          corFundoIcone: const Color(0xFFDBEAFE),
+          corDestaque: colors.primary,
+          corFundoIcone: AppTheme.badgeBgInfo(context),
         ),
         const SizedBox(height: 8),
         _StatusViagemCard(
@@ -972,11 +981,9 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
           subtitulo: subOnibus,
           icone: Icons.directions_bus_rounded,
           corDestaque: onibusMaisProximo?.acessivelPcD == true
-              ? const Color(0xFF059669)
-              : AppTheme.secondaryTeal,
-          corFundoIcone: onibusMaisProximo?.acessivelPcD == true
-              ? const Color(0xFFDCFCE7)
-              : const Color(0xFFCCFBF1),
+              ? AppTheme.adaptiveSuccess(context)
+              : colors.secondary,
+          corFundoIcone: AppTheme.badgeBgSuccess(context),
           trailingBadge: badgeOnibus,
         ),
         const SizedBox(height: 8),
@@ -985,8 +992,8 @@ class _RouteNavigationScreenState extends State<RouteNavigationScreen> {
           valorPrincipal: nomeDesembarque,
           subtitulo: 'Destino final deste trecho',
           icone: Icons.flag_rounded,
-          corDestaque: const Color(0xFFD97706),
-          corFundoIcone: const Color(0xFFFEF3C7),
+          corDestaque: AppTheme.adaptiveWarning(context),
+          corFundoIcone: AppTheme.badgeBgWarning(context),
         ),
       ],
     );
@@ -1020,14 +1027,15 @@ class _ParadaTimelineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final temOnibus = veiculosAqui.isNotEmpty;
     final Color dotColor = temOnibus
-        ? AppTheme.secondaryTeal
+        ? colors.secondary
         : isEmbarque
-            ? AppTheme.primaryBlue
+            ? colors.primary
             : isDesembarque
-                ? const Color(0xFFD97706)
-                : const Color(0xFF64748B);
+                ? AppTheme.adaptiveWarning(context)
+                : colors.onSurfaceVariant;
 
     return InkWell(
       onTap: onTap,
@@ -1036,9 +1044,9 @@ class _ParadaTimelineTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
         decoration: BoxDecoration(
           color: isSelecionada
-              ? Theme.of(context).colorScheme.primaryContainer
+              ? colors.primaryContainer
               : temOnibus
-                  ? Theme.of(context).colorScheme.tertiaryContainer
+                  ? colors.tertiaryContainer
                   : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -1056,7 +1064,7 @@ class _ParadaTimelineTile extends StatelessWidget {
                         width: 3,
                         color: isFirst
                             ? Colors.transparent
-                            : const Color(0xFFCBD5E1),
+                            : colors.outlineVariant,
                       ),
                     ),
                     Container(
@@ -1065,11 +1073,11 @@ class _ParadaTimelineTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: dotColor,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: colors.surface, width: 2),
                         boxShadow: temOnibus
                             ? [
                                 BoxShadow(
-                                  color: AppTheme.secondaryTeal.withValues(
+                                  color: colors.secondary.withValues(
                                     alpha: 0.45,
                                   ),
                                   blurRadius: 8,
@@ -1079,10 +1087,10 @@ class _ParadaTimelineTile extends StatelessWidget {
                             : null,
                       ),
                       child: temOnibus
-                          ? const Icon(
+                          ? Icon(
                               Icons.directions_bus,
                               size: 12,
-                              color: Colors.white,
+                              color: colors.onSecondary,
                             )
                           : null,
                     ),
@@ -1091,7 +1099,7 @@ class _ParadaTimelineTile extends StatelessWidget {
                         width: 3,
                         color: isLast
                             ? Colors.transparent
-                            : const Color(0xFFCBD5E1),
+                            : colors.outlineVariant,
                       ),
                     ),
                   ],
@@ -1106,40 +1114,25 @@ class _ParadaTimelineTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            '#$ordem',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              parada.nomeParada,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: (isEmbarque ||
-                                        isDesembarque ||
-                                        temOnibus)
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        parada.nomeParada,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: (isEmbarque ||
+                                  isDesembarque ||
+                                  temOnibus)
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: colors.onSurface,
+                        ),
                       ),
                       if (parada.endereco.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           parada.endereco,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF64748B),
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1152,26 +1145,28 @@ class _ParadaTimelineTile extends StatelessWidget {
                             if (isEmbarque)
                               _BadgeTag(
                                 text: 'SEU EMBARQUE',
-                                bgColor: const Color(0xFFDBEAFE),
-                                textColor: AppTheme.primaryBlue,
+                                bgColor: AppTheme.badgeBgInfo(context),
+                                textColor: colors.primary,
                               ),
                             if (isDesembarque)
-                              const _BadgeTag(
+                              _BadgeTag(
                                 text: 'SEU DESEMBARQUE',
-                                bgColor: Color(0xFFFEF3C7),
-                                textColor: Color(0xFFB45309),
+                                bgColor: AppTheme.badgeBgWarning(context),
+                                textColor: AppTheme.adaptiveWarning(context),
                               ),
                             ...veiculosAqui.map((info) {
                               final dist = info.distanciaMetros.round();
                               final label = info.estaPassandoNoPonto
-                                  ? '🚌 Linha $letreiroLinha passando aqui ($dist m)'
-                                  : '🚌 Linha $letreiroLinha próximo ($dist m)';
+                                  ? 'Linha $letreiroLinha passando aqui ($dist m)'
+                                  : 'Linha $letreiroLinha próximo ($dist m)';
                               return _BadgeTag(
-                                text: info.veiculo.acessivelPcD
-                                    ? '$label • ♿'
-                                    : label,
-                                bgColor: const Color(0xFFDCFCE7),
-                                textColor: const Color(0xFF166534),
+                                icon: Icons.directions_bus,
+                                trailingIcon: info.veiculo.acessivelPcD
+                                    ? Icons.accessible
+                                    : null,
+                                text: label,
+                                bgColor: AppTheme.badgeBgSuccess(context),
+                                textColor: AppTheme.adaptiveSuccess(context),
                               );
                             }),
                           ],
@@ -1193,11 +1188,15 @@ class _BadgeTag extends StatelessWidget {
   final String text;
   final Color bgColor;
   final Color textColor;
+  final IconData? icon;
+  final IconData? trailingIcon;
 
   const _BadgeTag({
     required this.text,
     required this.bgColor,
     required this.textColor,
+    this.icon,
+    this.trailingIcon,
   });
 
   @override
@@ -1208,13 +1207,28 @@ class _BadgeTag extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: textColor,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: textColor),
+            const SizedBox(width: 4),
+          ],
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: textColor,
+              ),
+            ),
+          ),
+          if (trailingIcon != null) ...[
+            const SizedBox(width: 4),
+            Icon(trailingIcon, size: 12, color: textColor),
+          ],
+        ],
       ),
     );
   }
@@ -1289,10 +1303,10 @@ class _StatusViagemCard extends StatelessWidget {
                   valorPrincipal,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: colors.onSurface,
                   ),
                 ),
                 const SizedBox(height: 1),
@@ -1300,10 +1314,10 @@ class _StatusViagemCard extends StatelessWidget {
                   subtitulo,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],

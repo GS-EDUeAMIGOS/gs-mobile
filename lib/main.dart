@@ -7,14 +7,16 @@ import 'screens/occurrences_screen.dart';
 import 'screens/route_navigation_screen.dart';
 import 'screens/route_planner_screen.dart';
 import 'screens/sptrans_screen.dart';
+import 'services/api_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
 /// Ponto de entrada da aplicação Flutter (`main.dart`)
-/// Responsabilidade Única: Carregar a preferência de tema, inicializar o `MaterialApp`
+/// Responsabilidade Única: Carregar a preferência de tema e ambiente da API, inicializar o `MaterialApp`
 /// com `AppTheme` (claro/escuro) e registrar a tabela de Rotas Nomeadas (`routes`).
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.instance.loadSavedEnvironment();
   final themeController = await ThemeController.load();
   runApp(ViaCidadaApp(themeController: themeController));
 }

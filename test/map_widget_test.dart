@@ -118,19 +118,23 @@ void main() {
     expect(find.textContaining('está a'), findsOneWidget);
     expect(find.textContaining('Ônibus nº'), findsNothing);
 
+    // Abre o menu colapsável de camadas para exibir os chips de filtros
+    await tester.tap(find.byIcon(Icons.layers_outlined));
+    await tester.pump(const Duration(milliseconds: 200));
+
     // Chips de filtros de camada no mapa
     expect(find.text('Pontos'), findsOneWidget);
     expect(find.text('Terminais'), findsOneWidget);
     expect(find.text('Ônibus'), findsOneWidget);
-    expect(find.text('Só PcD ♿'), findsOneWidget);
+    expect(find.text('Só PcD'), findsOneWidget);
     expect(find.text('Trajeto/Linha'), findsOneWidget);
 
     // Ambos os ônibus (PcD e comum) aparecem inicialmente exibindo o letreiro da linha
     expect(find.text('875A-10'), findsOneWidget);
     expect(find.text('6450-10'), findsOneWidget);
 
-    // Ativa o filtro "Só PcD ♿" -> oculta ônibus comum (6450-10) e mantém PcD (875A-10)
-    await tester.tap(find.text('Só PcD ♿'));
+    // Ativa o filtro "Só PcD" -> oculta ônibus comum (6450-10) e mantém PcD (875A-10)
+    await tester.tap(find.text('Só PcD'));
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(find.text('875A-10'), findsOneWidget);

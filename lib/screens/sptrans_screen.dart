@@ -5,7 +5,6 @@ import '../services/api_service.dart';
 import '../services/location_service.dart';
 import '../services/paradas_linha_fallback_helper.dart';
 import '../theme/app_theme.dart';
-import '../theme/map_theme.dart';
 import '../widgets/app_back_button.dart';
 import '../widgets/ponto_map_widget.dart';
 import '../widgets/theme_selector_button.dart';
@@ -350,7 +349,7 @@ class _SptransScreenState extends State<SptransScreen> {
         veiculos: pos.veiculos,
         descricaoSentido: _linhaSelecionada?.descricaoSentido ?? termoHint,
         letreiroCompleto:
-            _linhaSelecionada?.letreiroCompleto ?? '#$codigoLinha',
+            _linhaSelecionada?.letreiroCompleto ?? '$codigoLinha',
       );
       if (!mounted) return;
       setState(() {
@@ -408,7 +407,7 @@ class _SptransScreenState extends State<SptransScreen> {
   List<MapaVeiculoPin> _gerarPinosFrotaLinha() {
     final veiculos = _posicaoAtual?.veiculos ?? [];
     final letreiroAtual = _linhaSelecionada?.letreiroCompleto ??
-        (_codigoLinhaAvulso != null ? '#$_codigoLinhaAvulso' : '');
+        (_codigoLinhaAvulso != null ? '$_codigoLinhaAvulso' : '');
     return veiculos
         .map(
           (v) => MapaVeiculoPin(
@@ -425,36 +424,28 @@ class _SptransScreenState extends State<SptransScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
-        backgroundColor: colors.surface,
-        foregroundColor: colors.onSurface,
-        title: const Text('Radar & Mapa SPTrans'),
+        title: const Text('Radar SPTrans'),
         actions: [
           const ThemeSelectorButton(),
           IconButton(
             tooltip: _modoMapaExpandido
                 ? 'Alternar para Modo Clássico (Lista)'
-                : 'Alternar para Modo Mapa Moovit',
+                : 'Alternar para Modo Mapa',
             onPressed: () =>
                 setState(() => _modoMapaExpandido = !_modoMapaExpandido),
             icon: Icon(
               _modoMapaExpandido
                   ? Icons.view_agenda_outlined
                   : Icons.map_outlined,
-              color: colors.primary,
             ),
           ),
-          TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: colors.primary),
+          IconButton(
+            tooltip: 'Como Chegar',
             onPressed: () => Navigator.pushNamed(context, '/route-planner'),
-            icon: Icon(Icons.route, color: colors.primary, size: 18),
-            label: Text(
-              'Como Chegar',
-              style: TextStyle(color: colors.primary, fontWeight: FontWeight.w700),
-            ),
+            icon: const Icon(Icons.route),
           ),
         ],
       ),
@@ -478,11 +469,11 @@ class _SptransScreenState extends State<SptransScreen> {
           );
 
     final letreiroAtual = _linhaSelecionada?.letreiroCompleto ??
-        (_codigoLinhaAvulso != null ? '#$_codigoLinhaAvulso' : '');
+        (_codigoLinhaAvulso != null ? '$_codigoLinhaAvulso' : '');
 
     return Column(
       children: [
-        // Barra superior compacta Dark Transit (Modo + Busca + Ao Vivo 15s)
+        // Barra superior compacta (Modo + Busca + Ao Vivo 15s)
         _buildTopMoovitBar(),
 
         // Mapa em Tela Ampla + Painel Deslizante (DraggableScrollableSheet)
@@ -497,7 +488,7 @@ class _SptransScreenState extends State<SptransScreen> {
                         paradaSelecionada: _paradaSelecionada,
                         onSelecionarParada: _selecionarParadaEBuscarPrevisao,
                         veiculos: _gerarPinosVeiculosNoPonto(),
-                        tituloMapa: 'Estou no Ponto • Radar SPTrans',
+                        tituloMapa: 'Estou no Ponto',
                         linhaDestacada:
                             filtroLinha.isEmpty ? null : filtroLinha,
                         linhaPassaNestePonto: linhaConfirmadaNoPonto,
@@ -514,8 +505,8 @@ class _SptransScreenState extends State<SptransScreen> {
                         },
                         veiculos: _gerarPinosFrotaLinha(),
                         tituloMapa: letreiroAtual.isNotEmpty
-                            ? 'Linha $letreiroAtual • Frota e Trajeto'
-                            : 'Buscar por Linha • Frota SPTrans',
+                            ? 'Linha $letreiroAtual'
+                            : 'Buscar por Linha',
                         linhaDestacada:
                             letreiroAtual.isNotEmpty ? letreiroAtual : null,
                         usuarioLat: _posicaoGps?.latitude,
@@ -525,11 +516,11 @@ class _SptransScreenState extends State<SptransScreen> {
 
               // Painel Eletrônico Deslizante Estilo Moovit
               DraggableScrollableSheet(
-                initialChildSize: 0.34,
+                initialChildSize: 0.30,
                 minChildSize: 0.14,
                 maxChildSize: 0.85,
                 snap: true,
-                snapSizes: const [0.16, 0.34, 0.65, 0.85],
+                snapSizes: const [0.16, 0.30, 0.65, 0.85],
                 builder: (context, scrollController) {
                   final colors = Theme.of(context).colorScheme;
                   return Container(
@@ -540,7 +531,7 @@ class _SptransScreenState extends State<SptransScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
+                          color: Colors.black.withValues(alpha: 0.25),
                           blurRadius: 16,
                           offset: const Offset(0, -4),
                         ),
@@ -599,8 +590,10 @@ class _SptransScreenState extends State<SptransScreen> {
   }
 
   Widget _buildTopMoovitBar() {
+    final colors = Theme.of(context).colorScheme;
+    final liveColor = AppTheme.adaptiveSuccess(context);
     return Container(
-      color: MapTheme.surfaceDark,
+      color: colors.surface,
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       child: Column(
         children: [
@@ -639,25 +632,25 @@ class _SptransScreenState extends State<SptransScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: _atualizacaoAutomatica
-                        ? MapTheme.busPcdEmerald.withValues(alpha: 0.2)
-                        : MapTheme.surfaceCardDark,
+                        ? AppTheme.badgeBgSuccess(context)
+                        : colors.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _atualizacaoAutomatica
-                          ? MapTheme.busPcdEmerald
-                          : MapTheme.borderDark,
+                          ? liveColor
+                          : colors.outlineVariant,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (_atualizandoSilenciosamente)
-                        const SizedBox(
+                        SizedBox(
                           width: 10,
                           height: 10,
                           child: CircularProgressIndicator(
                             strokeWidth: 1.8,
-                            color: MapTheme.busPcdEmerald,
+                            color: liveColor,
                           ),
                         )
                       else
@@ -665,8 +658,8 @@ class _SptransScreenState extends State<SptransScreen> {
                           Icons.circle,
                           size: 8,
                           color: _atualizacaoAutomatica
-                              ? MapTheme.busPcdEmerald
-                              : MapTheme.textMuted,
+                              ? liveColor
+                              : colors.onSurfaceVariant,
                         ),
                       const SizedBox(width: 5),
                       Text(
@@ -675,8 +668,8 @@ class _SptransScreenState extends State<SptransScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: _atualizacaoAutomatica
-                              ? MapTheme.textPrimary
-                              : MapTheme.textMuted,
+                              ? liveColor
+                              : colors.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -695,8 +688,8 @@ class _SptransScreenState extends State<SptransScreen> {
                   controller: _abaSelecionada == 0
                       ? _termoParadaController
                       : _termoLinhaController,
-                  style: const TextStyle(
-                    color: MapTheme.textPrimary,
+                  style: TextStyle(
+                    color: colors.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -705,19 +698,19 @@ class _SptransScreenState extends State<SptransScreen> {
                   decoration: InputDecoration(
                     isDense: true,
                     filled: true,
-                    fillColor: MapTheme.surfaceCardDark,
+                    fillColor: colors.surfaceContainerHighest,
                     hintText: _abaSelecionada == 0
                         ? 'Buscar avenida/ponto (Paulista, Lapa...)'
                         : 'Buscar linha (8000, 875A, Paulista...)',
-                    hintStyle: const TextStyle(
-                      color: MapTheme.textMuted,
+                    hintStyle: TextStyle(
+                      color: colors.onSurfaceVariant,
                       fontSize: 12.5,
                     ),
                     prefixIcon: Icon(
                       _abaSelecionada == 0
                           ? Icons.place_outlined
                           : Icons.directions_bus_outlined,
-                      color: MapTheme.userGpsCyan,
+                      color: colors.primary,
                       size: 18,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -726,12 +719,12 @@ class _SptransScreenState extends State<SptransScreen> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: MapTheme.borderDark),
+                      borderSide: BorderSide(color: colors.outlineVariant),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: MapTheme.userGpsCyan,
+                      borderSide: BorderSide(
+                        color: colors.primary,
                         width: 1.5,
                       ),
                     ),
@@ -743,9 +736,9 @@ class _SptransScreenState extends State<SptransScreen> {
                 IconButton(
                   tooltip: 'Usar meu GPS atual',
                   style: IconButton.styleFrom(
-                    backgroundColor: MapTheme.surfaceCardDark,
-                    foregroundColor: MapTheme.userGpsCyan,
-                    side: const BorderSide(color: MapTheme.borderDark),
+                    backgroundColor: colors.surfaceContainerHighest,
+                    foregroundColor: colors.primary,
+                    side: BorderSide(color: colors.outlineVariant),
                   ),
                   onPressed: _isLoadingParadas
                       ? null
@@ -755,8 +748,8 @@ class _SptransScreenState extends State<SptransScreen> {
               const SizedBox(width: 4),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: MapTheme.stopSelectedBlue,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 11,
@@ -779,6 +772,7 @@ class _SptransScreenState extends State<SptransScreen> {
   // ===========================================================================
 
   Widget _buildModoClassico() {
+    final colors = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -786,46 +780,39 @@ class _SptransScreenState extends State<SptransScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTheme.primaryBlue.withValues(alpha: 0.08),
-                AppTheme.secondaryTeal.withValues(alpha: 0.12),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: AppTheme.badgeBgInfo(context),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppTheme.secondaryTeal.withValues(alpha: 0.4),
+              color: colors.primary.withValues(alpha: 0.35),
             ),
           ),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.map_outlined, color: AppTheme.primaryBlue, size: 22),
-                  SizedBox(width: 8),
+                  Icon(Icons.map_outlined, color: colors.primary, size: 22),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Como saber se você está no Ponto Correto?',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: colors.onSurface,
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
-                '• Veja no Mapa Dark Transit abaixo a posição exata da parada e o lado da avenida (B/C ou C/B).\n'
-                '• Digite o número do seu ônibus para confirmar se ele passa neste ponto e acompanhar o trajeto da linha!',
+                'Veja no mapa abaixo a posição exata da parada e o lado da avenida (B/C ou C/B). '
+                'Digite o número do seu ônibus para confirmar se ele passa neste ponto e acompanhar o trajeto da linha.',
                 style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
-                  color: Color(0xFF334155),
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             ],
@@ -861,14 +848,14 @@ class _SptransScreenState extends State<SptransScreen> {
 
         if (_errorMessage != null)
           Card(
-            color: const Color(0xFFFEF2F2),
+            color: colors.errorContainer,
             margin: const EdgeInsets.only(bottom: 16),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
                 _errorMessage!,
-                style: const TextStyle(
-                  color: AppTheme.dangerRed,
+                style: TextStyle(
+                  color: colors.onErrorContainer,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -888,6 +875,7 @@ class _SptransScreenState extends State<SptransScreen> {
   // ===========================================================================
 
   List<Widget> _buildConteudoAbaPonto({required bool incluirMapaCard}) {
+    final colors = Theme.of(context).colorScheme;
     final todasLinhasNoPonto = _previsaoParada?.parada?.linhas ?? [];
     final filtroLinha = _filtroLinhaNoPontoController.text.trim().toUpperCase();
 
@@ -920,13 +908,13 @@ class _SptransScreenState extends State<SptransScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         '1º Passo: Sua localização ou avenida do ponto',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
+                          color: colors.onSurface,
                         ),
                       ),
                     ),
@@ -974,13 +962,13 @@ class _SptransScreenState extends State<SptransScreen> {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: _usuarioEstaNoPonto == true
-                ? const Color(0xFFDCFCE7)
-                : const Color(0xFFEFF6FF),
+                ? AppTheme.badgeBgSuccess(context)
+                : AppTheme.badgeBgInfo(context),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: _usuarioEstaNoPonto == true
-                  ? const Color(0xFF22C55E)
-                  : AppTheme.primaryBlue.withValues(alpha: 0.35),
+                  ? AppTheme.adaptiveSuccess(context).withValues(alpha: 0.45)
+                  : colors.primary.withValues(alpha: 0.35),
             ),
           ),
           child: Row(
@@ -991,8 +979,8 @@ class _SptransScreenState extends State<SptransScreen> {
                     : Icons.directions_walk,
                 size: 18,
                 color: _usuarioEstaNoPonto == true
-                    ? const Color(0xFF15803D)
-                    : AppTheme.primaryBlue,
+                    ? AppTheme.adaptiveSuccess(context)
+                    : colors.primary,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1001,9 +989,7 @@ class _SptransScreenState extends State<SptransScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: _usuarioEstaNoPonto == true
-                        ? const Color(0xFF14532D)
-                        : const Color(0xFF1E3A8A),
+                    color: colors.onSurface,
                   ),
                 ),
               ),
@@ -1014,7 +1000,7 @@ class _SptransScreenState extends State<SptransScreen> {
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: ['PAULISTA', 'LAPA', 'PINHEIROS', 'CONSOLACAO', 'SANTO AMARO']
+          children: ['Paulista', 'Lapa', 'Pinheiros', 'Consolação', 'Santo Amaro']
               .map((sugestao) => Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: ActionChip(
@@ -1046,11 +1032,11 @@ class _SptransScreenState extends State<SptransScreen> {
         )
       else ...[
         Text(
-          'Pontos próximos (${_paradas.length}) — toque para comparar B/C vs C/B:',
-          style: const TextStyle(
+          'Pontos próximos (${_paradas.length}) — toque para comparar B/C e C/B:',
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF1E293B),
+            color: colors.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -1070,10 +1056,12 @@ class _SptransScreenState extends State<SptransScreen> {
                   width: 245,
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                    color: isSelected
+                        ? AppTheme.badgeBgInfo(context)
+                        : AppTheme.softSurface(context),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected ? AppTheme.primaryBlue : const Color(0xFFE2E8F0),
+                      color: isSelected ? colors.primary : colors.outlineVariant,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -1086,18 +1074,18 @@ class _SptransScreenState extends State<SptransScreen> {
                           Icon(
                             isSelected ? Icons.person_pin_circle : Icons.place,
                             size: 17,
-                            color: isSelected ? AppTheme.primaryBlue : const Color(0xFF64748B),
+                            color: isSelected ? colors.primary : colors.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              p.nomeParada.isEmpty ? 'Parada #${p.codigoParada}' : p.nomeParada,
+                              p.nomeParada.isEmpty ? 'Parada ${p.codigoParada}' : p.nomeParada,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF1E293B),
+                                color: colors.onSurface,
                               ),
                             ),
                           ),
@@ -1108,8 +1096,8 @@ class _SptransScreenState extends State<SptransScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.primaryBlue.withValues(alpha: 0.12)
-                              : const Color(0xFFF1F5F9),
+                              ? colors.primary.withValues(alpha: 0.14)
+                              : colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1117,7 +1105,7 @@ class _SptransScreenState extends State<SptransScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: isSelected ? AppTheme.primaryBlue : const Color(0xFF475569),
+                            color: isSelected ? colors.primary : colors.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -1126,7 +1114,7 @@ class _SptransScreenState extends State<SptransScreen> {
                         p.endereco.isEmpty ? 'Código SPTrans: ${p.codigoParada}' : p.endereco,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -1143,7 +1131,7 @@ class _SptransScreenState extends State<SptransScreen> {
             paradaSelecionada: _paradaSelecionada,
             onSelecionarParada: _selecionarParadaEBuscarPrevisao,
             veiculos: pinosVeiculosNoPonto,
-            tituloMapa: 'Mapa do Ponto: Confira se está do lado certo da via',
+            tituloMapa: 'Mapa do Ponto: Confira o lado da via',
             linhaDestacada: filtroLinha.isEmpty ? null : filtroLinha,
             linhaPassaNestePonto: linhaConfirmadaNoPonto,
             usuarioLat: _posicaoGps?.latitude,
@@ -1178,12 +1166,12 @@ class _SptransScreenState extends State<SptransScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                const Text(
+                Text(
                   'Passam aqui: ',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF15803D),
+                    color: AppTheme.adaptiveSuccess(context),
                   ),
                 ),
                 ...todasLinhasNoPonto.take(8).map((lp) {
@@ -1193,14 +1181,14 @@ class _SptransScreenState extends State<SptransScreen> {
                     padding: const EdgeInsets.only(right: 6),
                     child: ActionChip(
                       backgroundColor: isSelectedChip
-                          ? AppTheme.secondaryTeal.withValues(alpha: 0.2)
-                          : const Color(0xFFF0FDF4),
+                          ? colors.secondary.withValues(alpha: 0.24)
+                          : AppTheme.badgeBgSuccess(context),
                       label: Text(
                         lp.letreiroCompleto,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF14532D),
+                          color: AppTheme.adaptiveSuccess(context),
                         ),
                       ),
                       onPressed: () {
@@ -1237,11 +1225,15 @@ class _SptransScreenState extends State<SptransScreen> {
     required List<LinhaPrevisaoModel> linhasFiltradas,
     required String filtroLinha,
   }) {
+    final colors = Theme.of(context).colorScheme;
+    final successColor = AppTheme.adaptiveSuccess(context);
+    final warningColor = AppTheme.adaptiveWarning(context);
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
+        side: BorderSide(color: colors.primary, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1253,12 +1245,12 @@ class _SptransScreenState extends State<SptransScreen> {
                 Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                    color: colors.primary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.timer_outlined,
-                    color: AppTheme.primaryBlue,
+                    color: colors.primary,
                     size: 24,
                   ),
                 ),
@@ -1269,19 +1261,19 @@ class _SptransScreenState extends State<SptransScreen> {
                     children: [
                       Text(
                         'Painel Eletrônico: ${_paradaSelecionada!.nomeParada}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: colors.onSurface,
                         ),
                       ),
                       Text(
                         '${_paradaSelecionada!.endereco} • ${_paradaSelecionada!.ladoDaViaExplicado}'
                         '${_ultimaAtualizacao != null ? " • Ref. ${_formatarHoraAtualizacao()}" : ""}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryBlue,
+                          color: colors.primary,
                         ),
                       ),
                     ],
@@ -1291,7 +1283,7 @@ class _SptransScreenState extends State<SptransScreen> {
                   tooltip: 'Atualizar previsões de chegada',
                   onPressed: () =>
                       _selecionarParadaEBuscarPrevisao(_paradaSelecionada!),
-                  icon: const Icon(Icons.refresh, color: AppTheme.primaryBlue),
+                  icon: Icon(Icons.refresh, color: colors.primary),
                 ),
               ],
             ),
@@ -1302,35 +1294,48 @@ class _SptransScreenState extends State<SptransScreen> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (todasLinhasNoPonto.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(12),
+              Padding(
+                padding: const EdgeInsets.all(12),
                 child: Text(
                   'Nenhum ônibus com previsão imediata neste minuto para este ponto. '
-                  'Toque em outro pino no mapa para checar o outro lado da avenida!',
-                  style: TextStyle(color: Color(0xFF475569)),
+                  'Toque em outro pino no mapa para checar o outro lado da avenida.',
+                  style: TextStyle(color: colors.onSurfaceVariant),
                 ),
               )
             else if (linhasFiltradas.isEmpty)
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
+                  color: AppTheme.badgeBgWarning(context),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '⚠️ A linha "$filtroLinha" não aparece nas previsões deste ponto (${_paradaSelecionada!.nomeParada}).',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF92400E),
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 18,
+                          color: warningColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'A linha "$filtroLinha" não aparece nas previsões deste ponto (${_paradaSelecionada!.nomeParada}).',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: warningColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Você pode estar no ponto do sentido oposto da rua! Toque em outro ponto no mapa ou limpe o filtro.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF92400E)),
+                    Text(
+                      'Você pode estar no ponto do sentido oposto da rua. Toque em outro ponto no mapa ou limpe o filtro.',
+                      style: TextStyle(fontSize: 12, color: colors.onSurface),
                     ),
                   ],
                 ),
@@ -1338,10 +1343,10 @@ class _SptransScreenState extends State<SptransScreen> {
             else ...[
               Text(
                 'Ônibus se aproximando (${linhasFiltradas.length} linhas):',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF15803D),
+                  color: successColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -1364,9 +1369,9 @@ class _SptransScreenState extends State<SptransScreen> {
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppTheme.softSurface(context),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: colors.outlineVariant),
                   ),
                   child: Row(
                     children: [
@@ -1376,13 +1381,13 @@ class _SptransScreenState extends State<SptransScreen> {
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: colors.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           lp.letreiroCompleto,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.onPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 12.5,
                           ),
@@ -1395,23 +1400,37 @@ class _SptransScreenState extends State<SptransScreen> {
                           children: [
                             Text(
                               'Destino: ${lp.destino}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                                color: colors.onSurface,
                               ),
                             ),
                             if (proximoVeiculo != null)
-                              Text(
-                                '${proximoVeiculo.acessivelPcD ? "♿ Com Elevador PcD" : "Sem Elevador PcD"}'
-                                '${distanciaMetros != null ? " • ${PontoMapWidget.formatarDistancia(distanciaMetros)}" : ""}',
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: proximoVeiculo.acessivelPcD
-                                      ? AppTheme.secondaryTeal
-                                      : const Color(0xFFB45309),
-                                ),
+                              Row(
+                                children: [
+                                  if (proximoVeiculo.acessivelPcD) ...[
+                                    Icon(
+                                      Icons.accessible,
+                                      size: 13,
+                                      color: colors.secondary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Expanded(
+                                    child: Text(
+                                      '${proximoVeiculo.acessivelPcD ? "Com Elevador PcD" : "Sem Elevador PcD"}'
+                                      '${distanciaMetros != null ? " • ${PontoMapWidget.formatarDistancia(distanciaMetros)}" : ""}',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: proximoVeiculo.acessivelPcD
+                                            ? colors.secondary
+                                            : warningColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                           ],
                         ),
@@ -1423,28 +1442,28 @@ class _SptransScreenState extends State<SptransScreen> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: AppTheme.badgeBgSuccess(context),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppTheme.secondaryTeal.withValues(alpha: 0.4),
+                              color: successColor.withValues(alpha: 0.4),
                             ),
                           ),
                           child: Column(
                             children: [
-                              const Text(
+                              Text(
                                 'CHEGA ÀS',
                                 style: TextStyle(
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF15803D),
+                                  color: successColor,
                                 ),
                               ),
                               Text(
                                 proximoVeiculo.horarioPrevistoChegada,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF14532D),
+                                  color: successColor,
                                 ),
                               ),
                             ],
@@ -1466,9 +1485,12 @@ class _SptransScreenState extends State<SptransScreen> {
   // ===========================================================================
 
   List<Widget> _buildConteudoAbaLinha({required bool incluirMapaCard}) {
+    final colors = Theme.of(context).colorScheme;
+    final successColor = AppTheme.adaptiveSuccess(context);
+    final warningColor = AppTheme.adaptiveWarning(context);
     final veiculos = _posicaoAtual?.veiculos ?? [];
     final totalAcessiveis = veiculos.where((v) => v.acessivelPcD).length;
-    final letreiroAtual = _linhaSelecionada?.letreiroCompleto ?? '#$_codigoLinhaAvulso';
+    final letreiroAtual = _linhaSelecionada?.letreiroCompleto ?? '$_codigoLinhaAvulso';
     final pinosFrotaLinha = _gerarPinosFrotaLinha();
 
     return [
@@ -1479,18 +1501,18 @@ class _SptransScreenState extends State<SptransScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Qual linha de ônibus você quer ver no mapa ou fiscalizar?',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
+                    color: colors.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Digite o número do letreiro (ex.: 875A, 8000) ou bairro (ex.: Paulista, Lapa) para ver o trajeto completo e os ônibus.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                  style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -1531,10 +1553,10 @@ class _SptransScreenState extends State<SptransScreen> {
 
       Text(
         'Sentidos para "$_ultimoTermoLinha" (${_linhas.length}):',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13.5,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF1E293B),
+          color: colors.onSurface,
         ),
       ),
       const SizedBox(height: 8),
@@ -1558,11 +1580,13 @@ class _SptransScreenState extends State<SptransScreen> {
           final isSelected = _linhaSelecionada?.codigoLinha == linha.codigoLinha;
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
-            color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+            color: isSelected
+                ? AppTheme.badgeBgInfo(context)
+                : AppTheme.softSurface(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
               side: BorderSide(
-                color: isSelected ? AppTheme.primaryBlue : const Color(0xFFE2E8F0),
+                color: isSelected ? colors.primary : colors.outlineVariant,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -1576,17 +1600,23 @@ class _SptransScreenState extends State<SptransScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primaryBlue : const Color(0xFF0F172A),
+                        color: isSelected
+                            ? colors.primary
+                            : colors.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
                         children: [
-                          const Icon(Icons.directions_bus, color: Colors.white, size: 16),
+                          Icon(
+                            Icons.directions_bus,
+                            color: isSelected ? colors.onPrimary : colors.onSurface,
+                            size: 16,
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             linha.letreiroCompleto,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: isSelected ? colors.onPrimary : colors.onSurface,
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
                             ),
@@ -1599,25 +1629,35 @@ class _SptransScreenState extends State<SptransScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            isSelected
-                                ? '✓ EXIBINDO TRAJETO E FROTA DESTE SENTIDO'
-                                : 'SENTIDO ${linha.sentido == 1 ? "IDA" : "VOLTA"}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: isSelected
-                                  ? AppTheme.primaryBlue
-                                  : const Color(0xFF64748B),
-                            ),
+                          Row(
+                            children: [
+                              if (isSelected) ...[
+                                Icon(Icons.check_circle, size: 12, color: colors.primary),
+                                const SizedBox(width: 4),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  isSelected
+                                      ? 'EXIBINDO TRAJETO E FROTA DESTE SENTIDO'
+                                      : 'SENTIDO ${linha.sentido == 1 ? "IDA" : "VOLTA"}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: isSelected
+                                        ? colors.primary
+                                        : colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 3),
                           Text(
                             linha.descricaoSentido,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1E293B),
+                              color: colors.onSurface,
                             ),
                           ),
                         ],
@@ -1625,7 +1665,7 @@ class _SptransScreenState extends State<SptransScreen> {
                     ),
                     Icon(
                       isSelected ? Icons.radar : Icons.chevron_right,
-                      color: isSelected ? AppTheme.primaryBlue : const Color(0xFF94A3B8),
+                      color: isSelected ? colors.primary : colors.onSurfaceVariant,
                     ),
                   ],
                 ),
@@ -1647,7 +1687,7 @@ class _SptransScreenState extends State<SptransScreen> {
               setState(() => _paradaDaLinhaSelecionada = p);
             },
             veiculos: pinosFrotaLinha,
-            tituloMapa: 'Mapa ao Vivo • Linha $letreiroAtual e Trajeto',
+            tituloMapa: 'Linha $letreiroAtual',
             linhaDestacada: letreiroAtual,
             usuarioLat: _posicaoGps?.latitude,
             usuarioLon: _posicaoGps?.longitude,
@@ -1659,7 +1699,7 @@ class _SptransScreenState extends State<SptransScreen> {
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: AppTheme.secondaryTeal, width: 1.5),
+            side: BorderSide(color: colors.secondary, width: 1.5),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -1671,12 +1711,12 @@ class _SptransScreenState extends State<SptransScreen> {
                     Container(
                       padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
-                        color: AppTheme.secondaryTeal.withValues(alpha: 0.12),
+                        color: colors.secondary.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.gps_fixed,
-                        color: AppTheme.secondaryTeal,
+                        color: colors.secondary,
                         size: 24,
                       ),
                     ),
@@ -1687,22 +1727,22 @@ class _SptransScreenState extends State<SptransScreen> {
                         children: [
                           Text(
                             _linhaSelecionada != null
-                                ? 'Ônibus na rua • Linha ${_linhaSelecionada!.letreiroCompleto}'
-                                : 'Ônibus na rua (Código #$_codigoLinhaAvulso)',
-                            style: const TextStyle(
+                                ? 'Ônibus na rua — Linha ${_linhaSelecionada!.letreiroCompleto}'
+                                : 'Ônibus na rua — Linha $_codigoLinhaAvulso',
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                              color: colors.onSurface,
                             ),
                           ),
                           if (_linhaSelecionada != null)
                             Text(
                               '${_linhaSelecionada!.descricaoSentido}'
                               '${_ultimaAtualizacao != null ? " • Ref. ${_formatarHoraAtualizacao()}" : ""}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.secondaryTeal,
+                                color: colors.secondary,
                               ),
                             ),
                         ],
@@ -1710,7 +1750,7 @@ class _SptransScreenState extends State<SptransScreen> {
                     ),
                     IconButton(
                       tooltip: 'Atualizar frota',
-                      icon: const Icon(Icons.refresh, color: AppTheme.secondaryTeal),
+                      icon: Icon(Icons.refresh, color: colors.secondary),
                       onPressed: () {
                         if (_codigoLinhaAvulso != null) {
                           _carregarVeiculosEParadasPorCodigo(
@@ -1732,14 +1772,14 @@ class _SptransScreenState extends State<SptransScreen> {
                   Container(
                     padding: const EdgeInsets.all(11),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppTheme.badgeBgSuccess(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.accessible_forward,
-                          color: AppTheme.secondaryTeal,
+                          color: successColor,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -1749,10 +1789,10 @@ class _SptransScreenState extends State<SptransScreen> {
                                 : 'Há ${veiculos.length} ônibus circulando agora '
                                     '($totalAcessiveis com elevador PcD). '
                                     'Identifique pelo prefixo na porta:',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF14532D),
+                              color: successColor,
                             ),
                           ),
                         ),
@@ -1765,12 +1805,12 @@ class _SptransScreenState extends State<SptransScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(11),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppTheme.softSurface(context),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: v.acessivelPcD
-                              ? AppTheme.secondaryTeal.withValues(alpha: 0.5)
-                              : AppTheme.accentAmber.withValues(alpha: 0.6),
+                              ? colors.secondary.withValues(alpha: 0.5)
+                              : warningColor.withValues(alpha: 0.6),
                         ),
                       ),
                       child: Row(
@@ -1795,10 +1835,10 @@ class _SptransScreenState extends State<SptransScreen> {
                               children: [
                                 Text(
                                   'Ônibus nº ${v.prefixo}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
+                                    color: colors.onSurface,
                                   ),
                                 ),
                                 Text(
@@ -1809,8 +1849,8 @@ class _SptransScreenState extends State<SptransScreen> {
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: v.acessivelPcD
-                                        ? AppTheme.secondaryTeal
-                                        : const Color(0xFFB45309),
+                                        ? colors.secondary
+                                        : warningColor,
                                   ),
                                 ),
                               ],
@@ -1861,16 +1901,17 @@ class _CompactModePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? MapTheme.stopSelectedBlue : MapTheme.surfaceCardDark,
+          color: selected ? colors.primary : colors.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? MapTheme.userGpsCyan : MapTheme.borderDark,
+            color: selected ? colors.primary : colors.outlineVariant,
           ),
         ),
         child: Row(
@@ -1879,7 +1920,7 @@ class _CompactModePill extends StatelessWidget {
             Icon(
               icon,
               size: 15,
-              color: selected ? Colors.white : MapTheme.textSecondary,
+              color: selected ? colors.onPrimary : colors.onSurfaceVariant,
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -1890,7 +1931,7 @@ class _CompactModePill extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: selected ? Colors.white : MapTheme.textSecondary,
+                  color: selected ? colors.onPrimary : colors.onSurfaceVariant,
                 ),
               ),
             ),
