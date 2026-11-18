@@ -139,6 +139,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
   int _cartoErrorCount = 0;
 
   // Filtros interativos de camada
+  bool _mostrarFiltros = false;
   bool _showPontos = true;
   bool _showTerminais = true;
   bool _showOnibus = true;
@@ -678,19 +679,20 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
           // 1. Cabeçalho Dark Transit UI
           _buildHeader(paradaAtual, veiculosTodosComGps),
 
-          // 2. Faixa de Distância do GPS do Celular até o Ponto Selecionado (sempre visível para orientar a caminhada)
-          if (distanciaUsuarioAtePonto != null)
-            _buildDistanciaUsuarioBanner(distanciaUsuarioAtePonto, paradaAtual),
+          // 2. Faixa única unificada de distância + verificação da linha no ponto
+          if (distanciaUsuarioAtePonto != null ||
+              (!widget.modoNavegacaoSimples &&
+                  widget.linhaDestacada != null &&
+                  widget.linhaDestacada!.isNotEmpty &&
+                  widget.linhaPassaNestePonto != null))
+            _buildStatusUnificadoBanner(
+              distanciaUsuarioAtePonto: distanciaUsuarioAtePonto,
+              paradaAtual: paradaAtual,
+            ),
 
-          // 2b. Faixa de Verificação: "Estou no ponto certo para o meu ônibus?"
-          if (!widget.modoNavegacaoSimples &&
-              widget.linhaDestacada != null &&
-              widget.linhaDestacada!.isNotEmpty &&
-              widget.linhaPassaNestePonto != null)
-            _buildVerificacaoLinhaBanner(paradaAtual),
-
-          // 3. Barra de Filtros de Camada no Mapa (oculta no modo simples)
-          if (!widget.modoNavegacaoSimples) _buildFiltrosCamada(),
+          // 3. Barra de Filtros de Camada no Mapa (expansível sob demanda)
+          if (!widget.modoNavegacaoSimples && _mostrarFiltros)
+            _buildFiltrosCamada(),
 
           // 4. Área Interativa do Mapa (FlutterMap + CartoDB Dark Matter / OSM Fallback)
           _buildMapAreaWrapper(
@@ -704,7 +706,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
             onibusMaisProximo: onibusMaisProximo,
           ),
 
-          // 5. Rodapé Dark Transit Explicativo (Legenda + Guia B/C vs C/B)
+          // 5. Rodapé compacto em 1 linha (Legenda)
           if (!widget.expandido && !widget.modoNavegacaoSimples)
             _buildFooterLegenda(paradaAtual),
         ],
@@ -894,25 +896,56 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                     ],
                   ),
           ),
+          if (!widget.modoNavegacaoSimples) ...[
+            IconButton(
+              tooltip: _mostrarFiltros ? 'Ocultar camadas' : 'Filtrar camadas',
+              visualDensity: VisualDensity.compact,
+              onPressed: () =>
+                  setState(() => _mostrarFiltros = !_mostrarFiltros),
+              icon: Icon(
+                Icons.layers_outlined,
+                size: 18,
+                color: _mostrarFiltros
+                    ? MapTheme.userGpsCyan
+                    : MapTheme.textSecondary,
+              ),
+            ),
+            IconButton(
+              tooltip: _isDarkTheme
+                  ? 'Alternar para mapa claro'
+                  : 'Alternar para mapa escuro',
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                final controller = ThemeControllerScope.maybeOf(context);
+                if (controller != null) {
+                  controller.setMode(
+                    _isDarkTheme ? ThemeMode.light : ThemeMode.dark,
+                  );
+                } else {
+                  setState(() {
+                    _isDarkTheme = !_isDarkTheme;
+                  });
+                }
+              },
+              icon: Icon(
+                _isDarkTheme
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+                size: 18,
+                color: MapTheme.textSecondary,
+              ),
+            ),
+          ],
           if (veiculosTodosComGps.isNotEmpty ||
               (widget.paradasTrajetoLinha?.isNotEmpty ?? false))
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: MapTheme.surfaceCardDark,
-                foregroundColor: MapTheme.userGpsCyan,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                minimumSize: Size.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(color: MapTheme.borderDark),
-                ),
-              ),
+            IconButton(
+              tooltip: 'Enquadrar ônibus e rota',
+              visualDensity: VisualDensity.compact,
               onPressed: _enquadrarRotaEOnibus,
-              icon: const Icon(Icons.fit_screen_rounded, size: 15),
-              label: const Text(
-                'Enquadrar',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+              icon: const Icon(
+                Icons.fit_screen_rounded,
+                size: 18,
+                color: MapTheme.userGpsCyan,
               ),
             ),
         ],
@@ -920,62 +953,63 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
     );
   }
 
-  Widget _buildDistanciaUsuarioBanner(
-    double distanciaUsuarioAtePonto,
-    ParadaResumoModel? paradaAtual,
-  ) {
-    final bool estaNoPonto = distanciaUsuarioAtePonto <= 85;
+  Widget _buildStatusUnificadoBanner({
+    required double? distanciaUsuarioAtePonto,
+    required ParadaResumoModel? paradaAtual,
+  }) {
+    final bool temVerificacao = !widget.modoNavegacaoSimples &&
+        widget.linhaDestacada != null &&
+        widget.linhaDestacada!.isNotEmpty &&
+        widget.linhaPassaNestePonto != null;
+    final bool passa = widget.linhaPassaNestePonto == true;
+    final bool estaNoPonto =
+        distanciaUsuarioAtePonto != null && distanciaUsuarioAtePonto <= 85;
+
+    final Color bgColor;
+    final Color iconColor;
+    final IconData iconData;
+
+    if (temVerificacao) {
+      bgColor = passa ? const Color(0xFF065F46) : const Color(0xFF78350F);
+      iconColor = passa ? const Color(0xFF6EE7B7) : const Color(0xFFFCD34D);
+      iconData = passa ? Icons.verified_rounded : Icons.info_outline_rounded;
+    } else {
+      bgColor = estaNoPonto ? const Color(0xFF064E3B) : const Color(0xFF0C4A6E);
+      iconColor = estaNoPonto ? MapTheme.busPcdEmerald : MapTheme.userGpsCyan;
+      iconData = estaNoPonto ? Icons.my_location : Icons.directions_walk;
+    }
+
+    final List<String> partes = [];
+    if (distanciaUsuarioAtePonto != null) {
+      if (estaNoPonto) {
+        partes.add(
+          'Você já está no seu ponto (${distanciaUsuarioAtePonto.round()} m)',
+        );
+      } else {
+        partes.add(
+          'Caminhe ${PontoMapWidget.formatarDistancia(distanciaUsuarioAtePonto)} '
+          '(~${math.max(1, (distanciaUsuarioAtePonto / 75).ceil())} min)',
+        );
+      }
+    }
+    if (temVerificacao) {
+      partes.add(
+        passa
+            ? 'PONTO CONFIRMADO: linha ${widget.linhaDestacada} passa em ${paradaAtual?.nomeParada ?? "este ponto"}.'
+            : 'ATENÇÃO AO LADO DA VIA: ${widget.linhaDestacada} sem previsão aqui. Confira o outro lado da rua.',
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      color: estaNoPonto
-          ? const Color(0xFF064E3B)
-          : const Color(0xFF0C4A6E),
+      color: bgColor,
       child: Row(
         children: [
-          Icon(
-            estaNoPonto ? Icons.my_location : Icons.directions_walk,
-            size: 16,
-            color: estaNoPonto
-                ? MapTheme.busPcdEmerald
-                : MapTheme.userGpsCyan,
-          ),
+          Icon(iconData, size: 16, color: iconColor),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              estaNoPonto
-                  ? 'Você já está no seu ponto! (${distanciaUsuarioAtePonto.round()}m)'
-                  : 'Caminhe ${PontoMapWidget.formatarDistancia(distanciaUsuarioAtePonto)} '
-                      '(~${math.max(1, (distanciaUsuarioAtePonto / 75).ceil())} min) até ${paradaAtual?.nomeParada ?? "seu ponto"}',
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
-                color: MapTheme.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVerificacaoLinhaBanner(ParadaResumoModel? paradaAtual) {
-    final bool passa = widget.linhaPassaNestePonto == true;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      color: passa ? const Color(0xFF065F46) : const Color(0xFF78350F),
-      child: Row(
-        children: [
-          Icon(
-            passa ? Icons.verified_rounded : Icons.info_outline_rounded,
-            color: passa ? const Color(0xFF6EE7B7) : const Color(0xFFFCD34D),
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              passa
-                  ? 'PONTO CONFIRMADO: A linha ${widget.linhaDestacada} passa em ${paradaAtual?.nomeParada ?? "este ponto"}.'
-                  : 'ATENÇÃO AO LADO DA VIA: ${widget.linhaDestacada} não tem previsão imediata aqui. Confira outro lado da rua!',
+              partes.join(' • '),
               style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
@@ -1021,7 +1055,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
             ),
             const SizedBox(width: 6),
             _MapLayerFilterChip(
-              label: 'Só PcD ♿',
+              label: 'Só PcD',
               icon: Icons.accessible,
               active: _onlyPcdBuses,
               activeColor: MapTheme.busPcdEmerald,
@@ -1213,7 +1247,7 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
           ],
         ),
 
-        // Controles Flutuantes Escuros no canto direito
+        // Controles Flutuantes compactos no canto superior direito (máx. 3 botões)
         Positioned(
           right: 10,
           top: 10,
@@ -1250,40 +1284,11 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
                 tooltip: 'Focar em Você e no Seu Ponto',
                 onTap: _enquadrarUsuarioEPonto,
               ),
-              const SizedBox(height: 6),
-              _MapDarkControlButton(
-                icon: Icons.center_focus_strong,
-                tooltip: 'Enquadrar ônibus e rota',
-                onTap: _enquadrarRotaEOnibus,
-              ),
-              if (!widget.modoNavegacaoSimples) ...[
-                const SizedBox(height: 6),
-                _MapDarkControlButton(
-                  icon: _isDarkTheme
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                  tooltip: _isDarkTheme
-                      ? 'Alternar para mapa claro (OSM)'
-                      : 'Alternar para mapa escuro (Dark Transit)',
-                  onTap: () {
-                    final controller = ThemeControllerScope.maybeOf(context);
-                    if (controller != null) {
-                      controller.setMode(
-                        _isDarkTheme ? ThemeMode.light : ThemeMode.dark,
-                      );
-                    } else {
-                      setState(() {
-                        _isDarkTheme = !_isDarkTheme;
-                      });
-                    }
-                  },
-                ),
-              ],
             ],
           ),
         ),
 
-        // Badge discreto de Zoom / Modo no canto superior esquerdo
+        // Badge discreto de status no canto superior esquerdo (sem zoom técnico)
         Positioned(
           left: 10,
           top: 10,
@@ -1333,12 +1338,14 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
   String agruparBadgeTexto(int totalParadas, int totalOnibus) {
     if (widget.modoNavegacaoSimples) {
       if (totalOnibus == 0) {
-        return 'Ao vivo • Sem ônibus na linha';
+        return 'Ao vivo — Sem ônibus na linha';
       }
-      return 'Ao vivo • $totalOnibus ônibus na linha';
+      return 'Ao vivo — $totalOnibus ônibus na linha';
     }
-    final zoomTxt = 'z${_currentZoom.toStringAsFixed(1)}';
-    return '$zoomTxt • $totalParadas pts • $totalOnibus ônibus';
+    if (totalOnibus == 0) {
+      return 'Ao vivo — $totalParadas pontos';
+    }
+    return 'Ao vivo — $totalOnibus ônibus';
   }
 
   Widget _buildTileLayer(BuildContext context) {
@@ -1513,55 +1520,53 @@ class _PontoMapWidgetState extends State<PontoMapWidget>
 
   Widget _buildFooterLegenda(ParadaResumoModel? paradaAtual) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       color: MapTheme.surfaceDark,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Wrap(
-            spacing: 12,
-            runSpacing: 6,
-            children: [
-              _LegendItemDark(
-                color: MapTheme.stopSelectedBlue,
-                icon: Icons.directions_bus,
-                label: 'Ponto Selecionado',
-              ),
-              _LegendItemDark(
-                color: MapTheme.terminalPurple,
-                icon: Icons.directions_transit,
-                label: 'Terminal / Estação',
-              ),
-              _LegendItemDark(
-                color: MapTheme.busPcdEmerald,
-                icon: Icons.accessible,
-                label: 'Ônibus PcD',
-              ),
-              _LegendItemDark(
-                color: MapTheme.busStandardAmber,
-                icon: Icons.directions_bus_rounded,
-                label: 'Ônibus Comum',
-              ),
-              _LegendItemDark(
-                color: MapTheme.polylineCoreNeon,
-                icon: Icons.timeline,
-                label: 'Trajeto da Linha',
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            const _LegendItemDark(
+              color: MapTheme.stopSelectedBlue,
+              icon: Icons.directions_bus,
+              label: 'Ponto',
+            ),
+            const SizedBox(width: 12),
+            const _LegendItemDark(
+              color: MapTheme.terminalPurple,
+              icon: Icons.directions_transit,
+              label: 'Terminal',
+            ),
+            const SizedBox(width: 12),
+            const _LegendItemDark(
+              color: MapTheme.busPcdEmerald,
+              icon: Icons.accessible,
+              label: 'PcD',
+            ),
+            const SizedBox(width: 12),
+            const _LegendItemDark(
+              color: MapTheme.busStandardAmber,
+              icon: Icons.directions_bus_rounded,
+              label: 'Comum',
+            ),
+            const SizedBox(width: 12),
+            const _LegendItemDark(
+              color: MapTheme.polylineCoreNeon,
+              icon: Icons.timeline,
+              label: 'Trajeto',
+            ),
+            if (paradaAtual != null) ...[
+              const SizedBox(width: 14),
+              const Text(
+                'B/C: Bairro➔Centro | C/B: Centro➔Bairro',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: MapTheme.textMuted,
+                ),
               ),
             ],
-          ),
-          if (paradaAtual != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              'Lado da via: "${paradaAtual.nomeParada}" (${paradaAtual.ladoDaViaExplicado}) • '
-              'B/C = Bairro➔Centro | C/B = Centro➔Bairro.',
-              style: const TextStyle(
-                fontSize: 10.5,
-                color: MapTheme.textMuted,
-                height: 1.35,
-              ),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1584,21 +1589,20 @@ class _MapLayerFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        constraints: const BoxConstraints(minHeight: 48),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: const BoxConstraints(minHeight: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: active
-              ? activeColor.withValues(alpha: 0.22)
-              : colors.surfaceContainerHighest,
+              ? activeColor.withValues(alpha: 0.25)
+              : MapTheme.surfaceDark,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? activeColor : colors.outlineVariant,
+            color: active ? activeColor : MapTheme.borderDark,
             width: 1.2,
           ),
         ),
@@ -1608,7 +1612,7 @@ class _MapLayerFilterChip extends StatelessWidget {
             Icon(
               icon,
               size: 16,
-              color: active ? activeColor : colors.onSurfaceVariant,
+              color: active ? activeColor : MapTheme.textSecondary,
             ),
             const SizedBox(width: 4),
             Text(
@@ -1616,7 +1620,7 @@ class _MapLayerFilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: active ? colors.onSurface : colors.onSurfaceVariant,
+                color: active ? MapTheme.textPrimary : MapTheme.textSecondary,
               ),
             ),
           ],
@@ -1653,10 +1657,10 @@ class _MapDarkControlButton extends StatelessWidget {
         child: Tooltip(
           message: tooltip,
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             child: Center(
-              child: Icon(icon, size: 20, color: colors.onSurface),
+              child: Icon(icon, size: 19, color: colors.onSurface),
             ),
           ),
         ),

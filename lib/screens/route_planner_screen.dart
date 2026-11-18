@@ -33,24 +33,24 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   String? _errorMessage;
   bool _initializedArgs = false;
 
-  // Locais reais e destinos de São Paulo para teste com 1 toque
+  // Locais reais e destinos de São Paulo para seleção rápida
   static const List<Map<String, dynamic>> _destinosPopulares = [
     {
       'nome': 'Hospital Heliópolis',
       'termo': 'Hospital Heliópolis',
-      'subtitulo': 'Sacomã • R. Cônego Xavier',
+      'subtitulo': 'Sacomã — R. Cônego Xavier',
       'icone': Icons.local_hospital,
     },
     {
       'nome': 'Hospital das Clínicas',
       'termo': 'Hospital das Clínicas',
-      'subtitulo': 'Cerqueira César • Paulista',
+      'subtitulo': 'Cerqueira César — Paulista',
       'icone': Icons.medical_services,
     },
     {
       'nome': 'Av. Paulista / MASP',
       'termo': 'Av. Paulista',
-      'subtitulo': 'Bela Vista • Metrô Trianon',
+      'subtitulo': 'Bela Vista — Metrô Trianon',
       'icone': Icons.business,
     },
     {
@@ -62,31 +62,33 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     {
       'nome': 'Pinheiros / Faria Lima',
       'termo': 'Pinheiros',
-      'subtitulo': 'Zona Oeste • Terminal',
+      'subtitulo': 'Zona Oeste — Terminal',
       'icone': Icons.location_city,
     },
     {
       'nome': 'Terminal Lapa',
       'termo': 'Terminal Lapa',
-      'subtitulo': 'Zona Oeste • Integração',
+      'subtitulo': 'Zona Oeste — Integração',
       'icone': Icons.directions_transit,
     },
     {
       'nome': 'Santo Amaro',
       'termo': 'Santo Amaro',
-      'subtitulo': 'Zona Sul • Largo Treze',
+      'subtitulo': 'Zona Sul — Largo Treze',
       'icone': Icons.transfer_within_a_station,
     },
   ];
 
+  static const String _chipMeuGps = 'Meu GPS';
+
   static const List<String> _origensRapidas = [
-    '📍 MEU GPS',
-    'PAULISTA',
-    'LAPA',
-    'PINHEIROS',
-    'VILA MARIANA',
-    'SANTO AMARO',
-    'SANTANA',
+    _chipMeuGps,
+    'Paulista',
+    'Lapa',
+    'Pinheiros',
+    'Vila Mariana',
+    'Santo Amaro',
+    'Santana',
   ];
 
   @override
@@ -230,7 +232,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
-        title: const Text('Como Chegar (GPS + Locais)'),
+        title: const Text('Como Chegar'),
         actions: [
           const ThemeSelectorButton(),
           IconButton(
@@ -251,19 +253,19 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
               side: BorderSide(color: colors.outlineVariant),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.route, color: colors.primary, size: 24),
+                      Icon(Icons.route, color: colors.primary, size: 22),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Para qual local você quer ir?',
+                          'Planejar trajeto',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: FontWeight.w800,
                             color: colors.onSurface,
                           ),
@@ -271,12 +273,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Sua localização GPS já vem preenchida como partida (você pode digitar outro lugar se preferir). Digite qualquer destino como "Hospital Heliópolis", "Shopping", "USP" ou avenida!',
-                    style: TextStyle(fontSize: 13, color: colors.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // Campos de Origem (GPS ou digitado) e Destino (Local real)
                   Row(
@@ -295,21 +292,21 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                               },
                               onSubmitted: (_) => _calcularRota(),
                               decoration: InputDecoration(
-                                labelText: 'Ponto de Partida (Origem)',
-                                hintText: 'Sua localização ou digite um bairro/rua...',
+                                labelText: 'Ponto de Partida',
+                                hintText: 'Sua localização, rua ou bairro',
                                 prefixIcon: Icon(
                                   _usandoGpsNaOrigem
                                       ? Icons.my_location
                                       : Icons.trip_origin,
-                                  color: AppTheme.primaryBlue,
+                                  color: colors.primary,
                                 ),
                                 suffixIcon: IconButton(
-                                  tooltip: 'Usar localização GPS atual do meu aparelho',
+                                  tooltip: 'Usar localização GPS atual do aparelho',
                                   icon: Icon(
                                     Icons.gps_fixed,
                                     color: _usandoGpsNaOrigem
-                                        ? AppTheme.secondaryTeal
-                                        : const Color(0xFF64748B),
+                                        ? colors.secondary
+                                        : colors.onSurfaceVariant,
                                   ),
                                   onPressed: _ativarMeuGpsNaOrigem,
                                 ),
@@ -320,11 +317,11 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                               controller: _destinoController,
                               onSubmitted: (_) => _calcularRota(),
                               decoration: InputDecoration(
-                                labelText: 'Para onde você vai? (Local, Hospital, Rua...)',
-                                hintText: 'Ex.: Hospital Heliópolis, Clínicas, Ibirapuera...',
-                                prefixIcon: const Icon(
+                                labelText: 'Destino',
+                                hintText: 'Ex.: Hospital Heliópolis, Clínicas, Ibirapuera',
+                                prefixIcon: Icon(
                                   Icons.place,
-                                  color: AppTheme.dangerRed,
+                                  color: colors.error,
                                 ),
                                 suffixIcon: _destinoController.text.isNotEmpty
                                     ? IconButton(
@@ -355,34 +352,44 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        const Text(
+                        Text(
                           'Partida: ',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF64748B),
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         ..._origensRapidas.map((orig) {
-                          final isGpsChip = orig == '📍 MEU GPS';
+                          final isGpsChip = orig == _chipMeuGps;
                           final isSelected = isGpsChip
                               ? _usandoGpsNaOrigem
                               : (!_usandoGpsNaOrigem &&
-                                  _origemController.text.trim().toUpperCase() == orig);
+                                  _origemController.text.trim().toUpperCase() ==
+                                      orig.toUpperCase());
                           return Padding(
                             padding: const EdgeInsets.only(right: 6),
                             child: ActionChip(
+                              avatar: isGpsChip
+                                  ? Icon(
+                                      Icons.my_location,
+                                      size: 14,
+                                      color: isSelected
+                                          ? colors.onPrimaryContainer
+                                          : colors.primary,
+                                    )
+                                  : null,
                               backgroundColor: isSelected
-                                  ? AppTheme.primaryBlue.withValues(alpha: 0.14)
-                                  : const Color(0xFFF1F5F9),
+                                  ? colors.primaryContainer
+                                  : colors.surfaceContainerHighest,
                               label: Text(
                                 orig,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
-                                      ? AppTheme.primaryBlue
-                                      : const Color(0xFF334155),
+                                      ? colors.onPrimaryContainer
+                                      : colors.onSurface,
                                 ),
                               ),
                               onPressed: () {
@@ -409,7 +416,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _isLoading ? null : _calcularRota,
                       icon: const Icon(Icons.directions_bus),
-                      label: const Text('Traçar Rota até Este Local'),
+                      label: const Text('Traçar Rota'),
                     ),
                   ),
                 ],
@@ -418,117 +425,119 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 2. Grade de Locais Reais ("Ex.: Hospital Heliópolis, Clínicas, Ibirapuera...")
-          const Text(
-            'Locais frequentes para testar (toque para traçar rota):',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF334155),
+          // 2. Destinos frequentes (exibidos antes do cálculo para não empurrar o resultado para baixo)
+          if (_rotaPlanejada == null) ...[
+            Text(
+              'Destinos frequentes',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: colors.onSurface,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 82,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _destinosPopulares.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final item = _destinosPopulares[index];
-                final termo = item['termo'] as String;
-                final isSelected = _destinoController.text
-                        .trim()
-                        .toUpperCase() ==
-                    termo.toUpperCase();
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 82,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _destinosPopulares.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final item = _destinosPopulares[index];
+                  final termo = item['termo'] as String;
+                  final isSelected = _destinoController.text
+                          .trim()
+                          .toUpperCase() ==
+                      termo.toUpperCase();
 
-                return InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => _selecionarDestinoRapido(termo),
-                  child: Container(
-                    width: 205,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colors.primaryContainer
-                          : colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+                  return InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => _selecionarDestinoRapido(termo),
+                    child: Container(
+                      width: 205,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? colors.primary
-                            : colors.outlineVariant,
-                        width: isSelected ? 2 : 1,
+                            ? colors.primaryContainer
+                            : colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected
+                              ? colors.primary
+                              : colors.outlineVariant,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? colors.primary
+                                  : colors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              item['icone'] as IconData,
+                              size: 20,
+                              color: isSelected ? colors.onPrimary : colors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  item['nome'] as String,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['subtitulo'] as String,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? colors.primary
-                                : colors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            item['icone'] as IconData,
-                            size: 20,
-                            color: isSelected ? colors.onPrimary : colors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                item['nome'] as String,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: colors.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                item['subtitulo'] as String,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
+            const SizedBox(height: 18),
+          ],
 
           // 3. Exibição dos Resultados do Planejador
           if (_isLoading)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 14),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 14),
                     Text(
-                      'Localizando endereço do destino, calculando caminhada até o ponto e buscando ônibus na SPTrans...',
+                      'Calculando rota e consultando linhas disponíveis...',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF475569),
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -537,97 +546,68 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
             )
           else if (_errorMessage != null)
             Card(
-              color: const Color(0xFFFEF2F2),
+              color: colors.errorContainer,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    color: AppTheme.dangerRed,
+                  style: TextStyle(
+                    color: colors.onErrorContainer,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             )
           else if (_rotaPlanejada != null) ...[
-            // Card de Locais Geocodificados (Mostra onde fica o lugar buscado, ex.: Hospital Heliópolis)
+            // Resumo discreto de Origem e Destino resolvidos
             if (localOrig != null || localDest != null)
               Container(
                 margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: AppTheme.softSurface(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  border: Border.all(color: colors.outlineVariant),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (localOrig != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                Icons.my_location,
-                                size: 17,
-                                color: AppTheme.primaryBlue,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Partida: ${localOrig.nomeLocal} '
-                                  '(${localOrig.logradouro.isNotEmpty ? "${localOrig.logradouro} - " : ""}${localOrig.bairro}) '
-                                  '• Caminhe ${_rotaPlanejada!.distanciaCaminhadaOrigemMetros}m até o ponto',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_usandoGpsNaOrigem)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 25, top: 4),
-                              child: Text(
-                                '💡 Nota: No computador sem antena GPS, o navegador usa o IP da sua internet (${localOrig.bairro}). '
-                                'Se você estiver em outra rua, basta digitar sua rua ou bairro no campo "Ponto de Partida" acima!',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF475569),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    if (localOrig != null && localDest != null)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 6),
-                        child: Divider(height: 1),
-                      ),
-                    if (localDest != null)
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.place,
-                            size: 17,
-                            color: AppTheme.dangerRed,
-                          ),
+                          Icon(Icons.my_location, size: 16, color: colors.primary),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Local de Destino Encontrado: ${localDest.nomeLocal} '
-                              '• ${localDest.enderecoCompleto} '
-                              '(Bairro/Região SPTrans: ${localDest.termoBuscaSptrans})',
-                              style: const TextStyle(
+                              'Partida: ${localOrig.nomeLocal} (${_rotaPlanejada!.distanciaCaminhadaOrigemMetros} m até o ponto)',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: colors.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (localOrig != null && localDest != null)
+                      const SizedBox(height: 6),
+                    if (localDest != null)
+                      Row(
+                        children: [
+                          Icon(Icons.place, size: 16, color: colors.error),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Destino: ${localDest.nomeLocal}'
+                              '${localDest.bairro.isNotEmpty ? " — ${localDest.bairro}" : ""}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: colors.onSurface,
                               ),
                             ),
                           ),
@@ -749,7 +729,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   }
 }
 
-class _RouteOptionCard extends StatelessWidget {
+class _RouteOptionCard extends StatefulWidget {
   final OpcaoRotaModel opcao;
   final RotaPlanejadaResponseModel rotaPlanejada;
   final String termoOrigem;
@@ -761,7 +741,16 @@ class _RouteOptionCard extends StatelessWidget {
   });
 
   @override
+  State<_RouteOptionCard> createState() => _RouteOptionCardState();
+}
+
+class _RouteOptionCardState extends State<_RouteOptionCard> {
+  bool _expandido = false;
+
+  @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final opcao = widget.opcao;
     final isDireta = opcao.tipoRota == 'DIRETA';
 
     return Card(
@@ -771,8 +760,8 @@ class _RouteOptionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
           color: opcao.recomendada
-              ? AppTheme.secondaryTeal
-              : const Color(0xFFE2E8F0),
+              ? colors.secondary
+              : colors.outlineVariant,
           width: opcao.recomendada ? 2 : 1,
         ),
       ),
@@ -799,7 +788,7 @@ class _RouteOptionCard extends StatelessWidget {
                         Icon(Icons.star, color: Colors.white, size: 14),
                         SizedBox(width: 4),
                         Text(
-                          'MELHOR ROTA RECOMENDADA',
+                          'RECOMENDADA',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -813,67 +802,96 @@ class _RouteOptionCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: isDireta
-                        ? const Color(0xFFEFF6FF)
-                        : const Color(0xFFFFFBEB),
+                        ? AppTheme.badgeBgInfo(context)
+                        : AppTheme.badgeBgWarning(context),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     isDireta
                         ? '1 ÔNIBUS (DIRETO)'
-                        : '2 ÔNIBUS (COM BALDEAÇÃO)',
+                        : '2 ÔNIBUS (BALDEAÇÃO)',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: isDireta
-                          ? AppTheme.primaryBlue
-                          : const Color(0xFFB45309),
+                          ? colors.primary
+                          : AppTheme.adaptiveWarning(context),
                     ),
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: colors.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.schedule, size: 13, color: Color(0xFF475569)),
+                      Icon(Icons.schedule, size: 13, color: colors.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
-                        '~${opcao.tempoEstimadoMinutos} min total',
-                        style: const TextStyle(
+                        '~${opcao.tempoEstimadoMinutos} min',
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
+                          color: colors.onSurface,
                         ),
                       ),
                     ],
                   ),
                 ),
+                if (opcao.totalmenteAcessivelPcD)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.badgeBgSuccess(context),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.accessible,
+                          size: 13,
+                          color: AppTheme.adaptiveSuccess(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'PcD',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.adaptiveSuccess(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
 
             Text(
               opcao.titulo,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               opcao.motivoRecomendacao,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF475569),
+                color: colors.onSurfaceVariant,
               ),
             ),
-            // Botão visível e direto para iniciar a rota (estilo Moovit)
+            const SizedBox(height: 12),
+
+            // Botão visível e direto para iniciar a rota
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -883,7 +901,7 @@ class _RouteOptionCard extends StatelessWidget {
                     '/route-navigation',
                     arguments: {
                       'opcao': opcao,
-                      'rota': rotaPlanejada,
+                      'rota': widget.rotaPlanejada,
                     },
                   );
                 },
@@ -904,17 +922,35 @@ class _RouteOptionCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            const Divider(height: 1),
-            const SizedBox(height: 14),
+            const SizedBox(height: 6),
 
-            // Linha do Tempo Passo a Passo (Caminhada -> Embarque -> Baldeação -> Caminhada Final)
-            ...opcao.passos.map(
-              (passo) => _StepTimelineItem(
-                passo: passo,
-                termoOrigem: termoOrigem,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => setState(() => _expandido = !_expandido),
+                icon: Icon(
+                  _expandido ? Icons.expand_less : Icons.expand_more,
+                  size: 18,
+                ),
+                label: Text(
+                  _expandido
+                      ? 'Ocultar passo a passo'
+                      : 'Ver passo a passo (${opcao.passos.length} etapas)',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ),
+
+            if (_expandido) ...[
+              const Divider(height: 12),
+              const SizedBox(height: 8),
+              ...opcao.passos.map(
+                (passo) => _StepTimelineItem(
+                  passo: passo,
+                  termoOrigem: widget.termoOrigem,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -933,17 +969,26 @@ class _StepTimelineItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final isCaminhada = passo.tipoPasso == 'CAMINHADA';
     final isDesembarque = passo.tipoPasso == 'DESEMBARQUE';
     final isBaldeacao = passo.tipoPasso == 'BALDEACAO';
 
     final Color badgeColor = isCaminhada
-        ? const Color(0xFF0284C7)
+        ? colors.primary
         : isDesembarque
-            ? AppTheme.secondaryTeal
+            ? colors.secondary
             : isBaldeacao
-                ? AppTheme.accentAmber
-                : AppTheme.primaryBlue;
+                ? AppTheme.adaptiveWarning(context)
+                : colors.primary;
+
+    final Color stepBgColor = isCaminhada
+        ? AppTheme.badgeBgInfo(context)
+        : isDesembarque
+            ? AppTheme.badgeBgSuccess(context)
+            : isBaldeacao
+                ? AppTheme.badgeBgWarning(context)
+                : AppTheme.softSurface(context);
 
     final IconData stepIcon = isCaminhada
         ? Icons.directions_walk
@@ -962,14 +1007,14 @@ class _StepTimelineItem extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: badgeColor.withValues(alpha: 0.15),
+                backgroundColor: badgeColor.withValues(alpha: 0.18),
                 child: Icon(stepIcon, size: 18, color: badgeColor),
               ),
               if (!isDesembarque)
                 Container(
                   width: 2,
                   height: 60,
-                  color: const Color(0xFFCBD5E1),
+                  color: colors.outlineVariant,
                 ),
             ],
           ),
@@ -978,13 +1023,7 @@ class _StepTimelineItem extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isCaminhada
-                    ? const Color(0xFFF0F9FF)
-                    : isDesembarque
-                        ? const Color(0xFFF0FDF4)
-                        : isBaldeacao
-                            ? const Color(0xFFFFFBEB)
-                            : const Color(0xFFF8FAFC),
+                color: stepBgColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: badgeColor.withValues(alpha: 0.35),
@@ -1018,20 +1057,24 @@ class _StepTimelineItem extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: AppTheme.badgeBgSuccess(context),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.verified, size: 12, color: Color(0xFF15803D)),
-                              SizedBox(width: 3),
+                              Icon(
+                                Icons.verified,
+                                size: 12,
+                                color: AppTheme.adaptiveSuccess(context),
+                              ),
+                              const SizedBox(width: 3),
                               Text(
                                 'Ponto Confirmado',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF15803D),
+                                  color: AppTheme.adaptiveSuccess(context),
                                 ),
                               ),
                             ],
@@ -1042,10 +1085,10 @@ class _StepTimelineItem extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     passo.instrucao,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
+                      color: colors.onSurface,
                     ),
                   ),
 
@@ -1062,13 +1105,13 @@ class _StepTimelineItem extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: colors.primary,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             'Linha ${passo.letreiroCompleto}',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: colors.onPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                             ),
@@ -1076,81 +1119,86 @@ class _StepTimelineItem extends StatelessWidget {
                         ),
                         Text(
                           '${passo.veiculosAcessiveisPcD} com elevador PcD',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.secondaryTeal,
+                            color: colors.secondary,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            passo.previsaoChegada,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF475569),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    if (passo.previsaoChegada.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        passo.previsaoChegada,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
                         ),
-                        if (passo.codigoParada != null && passo.codigoParada! > 0)
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                      ),
+                    ],
+                    if ((passo.codigoParada != null && passo.codigoParada! > 0) ||
+                        passo.codigoLinha > 0) ...[
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          if (passo.codigoParada != null && passo.codigoParada! > 0)
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/sptrans',
-                                arguments: {
-                                  'aba': 0,
-                                  'termoParada': termoOrigem,
-                                  'codigoParada': passo.codigoParada,
-                                  'linhaFiltro': passo.letreiroCompleto,
-                                },
-                              );
-                            },
-                            icon: const Icon(Icons.map_outlined, size: 15),
-                            label: const Text(
-                              'Mapa do Ponto',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        if (passo.codigoLinha > 0)
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/sptrans',
+                                  arguments: {
+                                    'aba': 0,
+                                    'termoParada': termoOrigem,
+                                    'codigoParada': passo.codigoParada,
+                                    'linhaFiltro': passo.letreiroCompleto,
+                                  },
+                                );
+                              },
+                              icon: const Icon(Icons.map_outlined, size: 15),
+                              label: const Text(
+                                'Mapa do Ponto',
+                                style: TextStyle(fontSize: 12),
                               ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/sptrans',
-                                arguments: passo.codigoLinha,
-                              );
-                            },
-                            icon: const Icon(Icons.radar, size: 15),
-                            label: const Text(
-                              'Ver Linha',
-                              style: TextStyle(fontSize: 12),
+                          if (passo.codigoLinha > 0)
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/sptrans',
+                                  arguments: passo.codigoLinha,
+                                );
+                              },
+                              icon: const Icon(Icons.radar, size: 15),
+                              label: const Text(
+                                'Ver Linha',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
                   ],
 
                   if (passo.alertaComunidade != null &&
@@ -1159,27 +1207,27 @@ class _StepTimelineItem extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: colors.errorContainer,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppTheme.dangerRed.withValues(alpha: 0.4),
+                          color: colors.error.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.warning_amber_rounded,
                             size: 16,
-                            color: AppTheme.dangerRed,
+                            color: colors.onErrorContainer,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               passo.alertaComunidade!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: AppTheme.dangerRed,
+                                color: colors.onErrorContainer,
                               ),
                             ),
                           ),

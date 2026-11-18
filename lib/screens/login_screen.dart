@@ -341,6 +341,66 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                           ),
+                          if (!ApiService.instance.hasCustomBaseUrl) ...[
+                            const Divider(height: 24),
+                            Row(
+                              children: [
+                                Icon(Icons.cloud_outlined, size: 16, color: colors.primary),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Servidor da API Java:',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ChoiceChip(
+                                  avatar: const Icon(Icons.cloud_done_outlined, size: 16),
+                                  label: const Text('Azure (Nuvem)'),
+                                  selected:
+                                      ApiService.instance.environment == ApiEnvironment.azure,
+                                  onSelected: _isLoading
+                                      ? null
+                                      : (selected) async {
+                                          if (!selected) return;
+                                          await ApiService.instance
+                                              .setEnvironment(ApiEnvironment.azure);
+                                          if (mounted) setState(() {});
+                                        },
+                                ),
+                                ChoiceChip(
+                                  avatar: const Icon(Icons.computer_outlined, size: 16),
+                                  label: const Text('Localhost (8080)'),
+                                  selected:
+                                      ApiService.instance.environment == ApiEnvironment.local,
+                                  onSelected: _isLoading
+                                      ? null
+                                      : (selected) async {
+                                          if (!selected) return;
+                                          await ApiService.instance
+                                              .setEnvironment(ApiEnvironment.local);
+                                          if (mounted) setState(() {});
+                                        },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              ApiService.instance.baseUrl,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

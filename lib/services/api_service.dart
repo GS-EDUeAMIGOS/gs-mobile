@@ -1,9 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_model.dart';
 import '../models/ocorrencia_model.dart';
 import '../models/olho_vivo_model.dart';
+
+/// Ambientes disponíveis para consumo da API REST Java (ViaCidadã).
+enum ApiEnvironment {
+  azure,
+  local,
+}
 
 /// Camada: Services (Comunicação HTTP / Integração com Backend Java)
 /// Responsabilidade Única: Isolar toda a lógica de rede, URLs, cabeçalhos HTTP,
@@ -13,7 +20,23 @@ class ApiService {
   static final ApiService instance = ApiService._internal();
   ApiService._internal();
 
+  /// URL pública da API Java hospedada na Azure (produção / nuvem).
+  static const String azureBaseUrl =
+      'https://viacidada-3a46802b7054.eastus.cloudapp.azure.com/api';
+
+  static const String _envApiBaseUrl = String.fromEnvironment('API_BASE_URL');
+  static const String _envApiTarget =
+      String.fromEnvironment('API_ENV', defaultValue: 'azure');
+  static const String _prefEnvironmentKey = 'via_cidada_api_environment';
+
   static const Duration _ttlCacheParadas = Duration(minutes: 4);
+
+  ApiEnvironment _environment = _envApiTarget.toLowerCase() == 'local'
+      ? ApiEnvironment.local
+      : ApiEnvironment.azure;
+
+  ApiEnvironment get environment => _environment;
+  bool get hasCustomBaseUrl => _envApiBaseUrl.trim().isNotEmpty;
 
   AuthUser? _currentUser;
   AuthUser? get currentUser => _currentUser;
@@ -66,10 +89,10 @@ class ApiService {
         msg.contains('failed to fetch');
   }
 
-  /// Detecta automaticamente o endereço da API Java:
-  /// - No Navegador (Web) ou Windows Desktop: usa localhost:8080
-  /// - No Emulador Android: usa 10.0.2.2:8080 (que aponta para o localhost da máquina hospedeira)
-  String get baseUrl {
+  /// URL local padrão conforme a plataforma em execução:
+  /// - Navegador (Web) ou Desktop: http://localhost:8080/api
+  /// - Emulador Android: http://10.0.2.2:8080/api (aponta para o localhost do host)
+  static String get localBaseUrl {
     if (kIsWeb) {
       return 'http://localhost:8080/api';
     }
@@ -77,6 +100,51 @@ class ApiService {
       return 'http://10.0.2.2:8080/api';
     }
     return 'http://localhost:8080/api';
+  }
+
+  /// Resolve a URL base ativa da API Java com prioridade:
+  /// 1. `--dart-define=API_BASE_URL=...` (override explícito)
+  /// 2. Ambiente selecionado (`ApiEnvironment.azure` padrão ou `ApiEnvironment.local`)
+  String get baseUrl {
+    final customUrl = _envApiBaseUrl.trim();
+    if (customUrl.isNotEmpty) {
+      return customUrl.replaceFirst(RegExp(r'/+$'), '');
+    }
+    if (_environment == ApiEnvironment.local) {
+      return localBaseUrl;
+    }
+    return azureBaseUrl;
+  }
+
+  /// Carrega o ambiente salvo localmente (`azure` ou `local`), respeitando overrides de build.
+  Future<void> loadSavedEnvironment() async {
+    if (hasCustomBaseUrl || const bool.hasEnvironment('API_ENV')) {
+      return;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_prefEnvironmentKey);
+      if (saved == ApiEnvironment.local.name) {
+        _environment = ApiEnvironment.local;
+      } else if (saved == ApiEnvironment.azure.name) {
+        _environment = ApiEnvironment.azure;
+      }
+    } catch (_) {
+      // Ignora falhas de storage em ambientes de teste unitário.
+    }
+  }
+
+  /// Alterna entre o servidor Azure (nuvem) e Localhost (8080), limpando sessão e cache anteriores.
+  Future<void> setEnvironment(ApiEnvironment env) async {
+    if (_environment == env) return;
+    _environment = env;
+    logout();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefEnvironmentKey, env.name);
+    } catch (_) {
+      // Ignora falhas de storage em ambientes de teste unitário.
+    }
   }
 
   /// Monta os cabeçalhos HTTP padrão em UTF-8 e injeta o Token JWT ("Bearer ...") se estiver logado

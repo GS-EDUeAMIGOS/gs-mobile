@@ -29,6 +29,35 @@ class AppTheme {
   static ThemeData get lightTheme => _buildTheme(isDark: false);
   static ThemeData get darkTheme => _buildTheme(isDark: true);
 
+  // Helpers semânticos adaptativos para superfícies de destaque e status
+  // (garantem alto contraste tanto no Brightness.light quanto no Brightness.dark)
+  static bool isDarkMode(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color adaptiveSuccess(BuildContext context) =>
+      isDarkMode(context) ? const Color(0xFF4ADE80) : const Color(0xFF15803D);
+
+  static Color adaptiveWarning(BuildContext context) =>
+      isDarkMode(context) ? const Color(0xFFFBBF24) : const Color(0xFFB45309);
+
+  static Color adaptiveDanger(BuildContext context) =>
+      Theme.of(context).colorScheme.error;
+
+  static Color badgeBgInfo(BuildContext context) =>
+      isDarkMode(context) ? const Color(0xFF0C4A6E) : const Color(0xFFEFF6FF);
+
+  static Color badgeBgSuccess(BuildContext context) =>
+      isDarkMode(context) ? const Color(0xFF064E3B) : const Color(0xFFDCFCE7);
+
+  static Color badgeBgWarning(BuildContext context) =>
+      isDarkMode(context) ? const Color(0xFF451A03) : const Color(0xFFFEF3C7);
+
+  static Color badgeBgDanger(BuildContext context) =>
+      isDarkMode(context) ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2);
+
+  static Color softSurface(BuildContext context) =>
+      isDarkMode(context) ? darkCard : const Color(0xFFF8FAFC);
+
   static ThemeData _buildTheme({required bool isDark}) {
     final background = isDark ? darkBackground : surfaceBackground;
     final surface = isDark ? darkSurface : Colors.white;

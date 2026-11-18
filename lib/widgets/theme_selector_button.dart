@@ -16,6 +16,7 @@ class ThemeSelectorButton extends StatelessWidget {
       animation: controller,
       builder: (context, _) {
         final isDark = controller.isDark;
+        final colors = Theme.of(context).colorScheme;
         return PopupMenuButton<ThemeMode>(
           tooltip: 'Escolher aparência',
           icon: Icon(
@@ -29,11 +30,20 @@ class ThemeSelectorButton extends StatelessWidget {
                 label: 'Tema claro${isDark ? '' : ', selecionado'}',
                 child: Row(
                   children: [
-                    const Icon(Icons.light_mode_outlined),
+                    Icon(Icons.light_mode_outlined, color: colors.onSurface),
                     const SizedBox(width: 12),
-                    const Expanded(child: Text('Claro')),
+                    Expanded(
+                      child: Text(
+                        'Claro',
+                        style: TextStyle(color: colors.onSurface),
+                      ),
+                    ),
                     if (!isDark)
-                      const Icon(Icons.check, semanticLabel: 'Selecionado'),
+                      Icon(
+                        Icons.check,
+                        color: colors.primary,
+                        semanticLabel: 'Selecionado',
+                      ),
                   ],
                 ),
               ),
@@ -44,11 +54,20 @@ class ThemeSelectorButton extends StatelessWidget {
                 label: 'Tema escuro${isDark ? ', selecionado' : ''}',
                 child: Row(
                   children: [
-                    const Icon(Icons.dark_mode_outlined),
+                    Icon(Icons.dark_mode_outlined, color: colors.onSurface),
                     const SizedBox(width: 12),
-                    const Expanded(child: Text('Escuro')),
+                    Expanded(
+                      child: Text(
+                        'Escuro',
+                        style: TextStyle(color: colors.onSurface),
+                      ),
+                    ),
                     if (isDark)
-                      const Icon(Icons.check, semanticLabel: 'Selecionado'),
+                      Icon(
+                        Icons.check,
+                        color: colors.primary,
+                        semanticLabel: 'Selecionado',
+                      ),
                   ],
                 ),
               ),
