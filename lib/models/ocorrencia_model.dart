@@ -60,6 +60,11 @@ enum NivelGravidade {
 }
 
 class OcorrenciaModel {
+  static final RegExp _linhaTagPattern = RegExp(
+    r'^\s*\[Linha:\s*(.+?)\]\s*(?:\r?\n|$)',
+    caseSensitive: false,
+  );
+
   final int? id;
   final int usuarioId;
   final String? nomeUsuario;
@@ -89,6 +94,25 @@ class OcorrenciaModel {
     this.afetaAcessibilidade = false,
     this.criadoEm,
   });
+
+  /// Nome/número informado pelo cidadão e persistido sem alterar o contrato da API.
+  ///
+  /// A tag `[Linha: ...]` fica no início da descrição porque o backend atual ainda
+  /// não possui uma coluna textual para o nome da linha. Quando a ocorrência é
+  /// antiga e não tem tag, o código oficial da SPTrans funciona como fallback.
+  String? get linhaEmDestaque {
+    final match = _linhaTagPattern.firstMatch(descricao);
+    final linhaInformada = match?.group(1)?.trim();
+    if (linhaInformada != null && linhaInformada.isNotEmpty) {
+      return linhaInformada;
+    }
+    return codigoLinha?.toString();
+  }
+
+  /// Descrição destinada à leitura humana, sem repetir a tag técnica na interface.
+  String get descricaoSemTagLinha {
+    return descricao.replaceFirst(_linhaTagPattern, '').trimLeft();
+  }
 
   /// Converte o JSON de resposta (`OcorrenciaDTO.Response`) do Java para o modelo Dart
   factory OcorrenciaModel.fromJson(Map<String, dynamic> json) {
