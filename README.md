@@ -21,7 +21,7 @@ O aplicativo consome diretamente a API REST em Java/Spring Boot ([gs-java-api](h
 | Marcos Vinicius de Jesus Almeida | 567214 | 2TDS |
 
 ### Vídeo de Demonstração (Emulador / Dispositivo Físico)
-- **Link do Vídeo (YouTube Não Listado — até 5 min):** *(Inserir link após gravação em emulador ou celular)*
+- **Link do Vídeo (YouTube Não Listado — até 5 min):** https://www.youtube.com/watch?v=BxIJTXHqGcU
 
 ### Cidadão Beneficiado & Conexão com os ODS (ONU)
 - **Cidadão Beneficiado:** Passageiros do transporte público urbano, especialmente Pessoas com Deficiência (PcD), idosos e pessoas com mobilidade reduzida que dependem de veículos com elevador/rampa acessível e infraestrutura adequada nas paradas.

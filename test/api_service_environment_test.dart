@@ -24,7 +24,7 @@ void main() {
     expect(ApiService.instance.baseUrl, endsWith('/api'));
   });
 
-  testWidgets('LoginScreen permite alternar servidor da API entre Azure e Localhost',
+  testWidgets('LoginScreen nao exibe seletor de servidor da API',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -33,18 +33,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Azure (Nuvem)'), findsOneWidget);
-    expect(find.text('Localhost (8080)'), findsOneWidget);
-    expect(
-      find.text('https://viacidada-3a46802b7054.eastus.cloudapp.azure.com/api'),
-      findsOneWidget,
-    );
-
-    await tester.ensureVisible(find.text('Localhost (8080)'));
-    await tester.tap(find.text('Localhost (8080)'));
-    await tester.pumpAndSettle();
-
-    expect(ApiService.instance.environment, ApiEnvironment.local);
-    expect(find.text(ApiService.localBaseUrl), findsOneWidget);
+    expect(find.text('Servidor da API Java:'), findsNothing);
+    expect(find.text('Azure (Nuvem)'), findsNothing);
+    expect(find.text('Localhost (8080)'), findsNothing);
   });
 }
