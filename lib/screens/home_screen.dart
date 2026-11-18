@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/ocorrencia_model.dart';
 import '../services/api_service.dart';
+import '../services/location_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/occurrence_card.dart';
 import '../widgets/theme_selector_button.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<OcorrenciaModel> _criticas = [];
+  List<OcorrenciaModel> _alertasAtivos = [];
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -25,6 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _carregarPainel();
+    // Solicita permissão de GPS e aquece a localização em background logo ao abrir o app
+    LocationService.instance.obterLocalizacaoAtual();
   }
 
   Future<void> _carregarPainel() async {
@@ -34,10 +37,38 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final lista = await ApiService.instance.listarCriticasAcessibilidade();
+      final resultados = await Future.wait([
+        ApiService.instance.listarCriticasAcessibilidade(),
+        ApiService.instance.listarOcorrencias(),
+      ]);
+
+      final porOcorrencia = <String, OcorrenciaModel>{};
+      for (final ocorrencia in [...resultados[0], ...resultados[1]]) {
+        final estaAtiva =
+            ocorrencia.status != StatusOcorrencia.RESOLVIDA &&
+            ocorrencia.status != StatusOcorrencia.ARQUIVADA;
+        if (!estaAtiva) continue;
+
+        final chave = ocorrencia.id != null
+            ? 'id:${ocorrencia.id}'
+            : '${ocorrencia.titulo}|${ocorrencia.criadoEm}|${ocorrencia.usuarioId}';
+        porOcorrencia.putIfAbsent(chave, () => ocorrencia);
+      }
+
+      final alertas = porOcorrencia.values.toList()
+        ..sort((a, b) {
+          if (a.afetaAcessibilidade != b.afetaAcessibilidade) {
+            return a.afetaAcessibilidade ? -1 : 1;
+          }
+          final dataA = DateTime.tryParse(a.criadoEm ?? '');
+          final dataB = DateTime.tryParse(b.criadoEm ?? '');
+          if (dataA == null || dataB == null) return 0;
+          return dataB.compareTo(dataA);
+        });
+
       if (!mounted) return;
       setState(() {
-        _criticas = lista;
+        _alertasAtivos = alertas;
         _isLoading = false;
       });
     } catch (e) {
@@ -105,7 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user != null ? 'Olá, ${user.nome}' : 'Modo Visitante (Leitura)',
+                              user != null
+                                  ? 'Olá, ${user.nome}'
+                                  : 'Modo Visitante (Leitura)',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -145,9 +178,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     InkWell(
                       borderRadius: BorderRadius.circular(12),
-                      onTap: () => Navigator.pushNamed(context, '/route-planner'),
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/route-planner'),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: colors.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
@@ -166,7 +203,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios, size: 14, color: colors.primary),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: colors.primary,
+                            ),
                           ],
                         ),
                       ),
@@ -189,27 +230,38 @@ class _HomeScreenState extends State<HomeScreen> {
                             {'label': 'Pinheiros', 'destino': 'PINHEIROS'},
                             {'label': 'Centro / Ramos', 'destino': 'RAMOS'},
                             {'label': 'Ibirapuera', 'destino': 'IBIRAPUERA'},
-                            {'label': 'Vila Mariana', 'destino': 'VILA MARIANA'},
-                          ].map((d) => Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: ActionChip(
-                                  avatar: Icon(Icons.place, size: 14, color: colors.primary),
-                                  label: Text(
-                                    d['label']!,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/route-planner',
-                                      arguments: {
-                                        'origem': 'LAPA',
-                                        'destino': d['destino'],
-                                      },
-                                    );
-                                  },
+                            {
+                              'label': 'Vila Mariana',
+                              'destino': 'VILA MARIANA',
+                            },
+                          ].map(
+                            (d) => Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ActionChip(
+                                avatar: Icon(
+                                  Icons.place,
+                                  size: 14,
+                                  color: colors.primary,
                                 ),
-                              )),
+                                label: Text(
+                                  d['label']!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/route-planner',
+                                    arguments: {
+                                      'destino': d['destino'],
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -300,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Alertas de Acessibilidade Ativos',
+                        'Alertas e Destaques Ativos',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -308,8 +360,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        'Atualizado com os alertas de acessibilidade disponíveis',
-                        style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+                        'Ocorrências abertas recentes e prioridades de acessibilidade',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -344,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Não foi possível carregar os alertas de acessibilidade',
+                              'Não foi possível carregar os alertas ativos',
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: colors.error,
@@ -356,7 +411,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 8),
                       Text(
                         '$_errorMessage',
-                        style: TextStyle(fontSize: 13, color: colors.onErrorContainer),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: colors.onErrorContainer,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
@@ -368,17 +426,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               )
-            else if (_criticas.isEmpty)
+            else if (_alertasAtivos.isEmpty)
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(24),
                   child: Center(
-                    child: Text('Nenhuma ocorrência crítica de acessibilidade no momento.'),
+                    child: Text('Nenhuma ocorrência ativa no momento.'),
                   ),
                 ),
               )
             else
-              ..._criticas.map(
+              ..._alertasAtivos.map(
                 (item) => OccurrenceCard(
                   ocorrencia: item,
                   onTap: () async {
@@ -451,10 +509,7 @@ class _QuickActionCard extends StatelessWidget {
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.onSurfaceVariant,
-                ),
+                style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
               ),
             ],
           ),

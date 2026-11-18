@@ -36,24 +36,16 @@ class LocationService {
 
     final nativo = await obterCoordenadasNativas();
     if (nativo != null) {
-      // Verifica se a coordenada capturada está dentro da Região Metropolitana de São Paulo
-      final dentroDeSp = nativo.latitude >= -24.1 &&
-          nativo.latitude <= -23.1 &&
-          nativo.longitude >= -47.3 &&
-          nativo.longitude <= -46.1;
-
-      if (dentroDeSp) {
-        _ultimaPosicao = PosicaoUsuarioGps(
-          latitude: nativo.latitude,
-          longitude: nativo.longitude,
-          gpsRealDispositivo: true,
-          descricaoOrigem: 'GPS do seu aparelho',
-        );
-        return _ultimaPosicao!;
-      }
+      _ultimaPosicao = PosicaoUsuarioGps(
+        latitude: nativo.latitude,
+        longitude: nativo.longitude,
+        gpsRealDispositivo: true,
+        descricaoOrigem: 'GPS do seu aparelho',
+      );
+      return _ultimaPosicao!;
     }
 
-    // Fallback automático caso o usuário esteja testando no PC sem GPS ou fora de SP
+    // Fallback automático apenas quando a permissão for negada, GPS desligado ou em desktop/testes sem sensor
     _ultimaPosicao = const PosicaoUsuarioGps(
       latitude: -23.561414,
       longitude: -46.655881,

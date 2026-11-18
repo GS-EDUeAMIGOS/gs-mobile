@@ -23,7 +23,7 @@ class RoutePlannerScreen extends StatefulWidget {
 
 class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   final _origemController = TextEditingController(text: 'Minha Localização Atual (GPS)');
-  final _destinoController = TextEditingController(text: 'Hospital Heliópolis');
+  final _destinoController = TextEditingController();
 
   PosicaoUsuarioGps? _posicaoGps;
   bool _usandoGpsNaOrigem = true;
@@ -96,17 +96,24 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     super.didChangeDependencies();
     if (!_initializedArgs) {
       _initializedArgs = true;
+      bool temDestinoPorParametro = false;
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
         if (args['origem'] != null) {
           _origemController.text = args['origem'].toString();
           _usandoGpsNaOrigem = false;
         }
-        if (args['destino'] != null) {
+        if (args['destino'] != null &&
+            args['destino'].toString().trim().isNotEmpty) {
           _destinoController.text = args['destino'].toString();
+          temDestinoPorParametro = true;
         }
       }
-      _inicializarGpsECalcularRota();
+      if (temDestinoPorParametro) {
+        _inicializarGpsECalcularRota();
+      } else {
+        _inicializarApenasGps();
+      }
     }
   }
 
@@ -115,6 +122,18 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     _origemController.dispose();
     _destinoController.dispose();
     super.dispose();
+  }
+
+  Future<void> _inicializarApenasGps() async {
+    try {
+      final pos = await LocationService.instance.obterLocalizacaoAtual();
+      if (!mounted) return;
+      setState(() {
+        _posicaoGps = pos;
+      });
+    } catch (_) {
+      // Segue normalmente caso o GPS não responda
+    }
   }
 
   Future<void> _inicializarGpsECalcularRota() async {
@@ -138,7 +157,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   Future<void> _ativarMeuGpsNaOrigem() async {
     setState(() {
-      _isLoading = true;
+      _isLoading = _destinoController.text.trim().isNotEmpty;
       _usandoGpsNaOrigem = true;
       _origemController.text = 'Minha Localização Atual (GPS)';
     });
@@ -149,8 +168,11 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
     if (!mounted) return;
     setState(() {
       _posicaoGps = pos;
+      _isLoading = false;
     });
-    await _calcularRota();
+    if (_destinoController.text.trim().isNotEmpty) {
+      await _calcularRota();
+    }
   }
 
   void _inverterOrigemDestino() {
@@ -161,7 +183,9 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
       _destinoController.text =
           temp.contains('GPS') ? 'Av. Paulista' : temp;
     });
-    _calcularRota();
+    if (_destinoController.text.trim().isNotEmpty) {
+      _calcularRota();
+    }
   }
 
   void _selecionarDestinoRapido(String termoDestino) {
@@ -173,16 +197,34 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   Future<void> _calcularRota() async {
     final textoOrigem = _origemController.text.trim();
-    final destino = _destinoController.text.trim().isEmpty
-        ? 'Hospital Heliópolis'
-        : _destinoController.text.trim();
+    final destino = _destinoController.text.trim();
+
+    if (destino.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Digite um destino ou escolha um local para traçar sua rota.',
+          ),
+        ),
+      );
+      return;
+    }
 
     // Se estiver usando GPS na origem, envia exclusivamente as coordenadas do aparelho para o backend
     // (sem misturar com Paulista!)
     final bool enviarCoordenadasGps = _usandoGpsNaOrigem && _posicaoGps != null;
-    final String origemParaApi = enviarCoordenadasGps
-        ? 'GPS'
-        : (textoOrigem.isEmpty ? 'IPIRANGA' : textoOrigem);
+    if (!enviarCoordenadasGps && textoOrigem.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Digite um ponto de partida ou ative o Meu GPS.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final String origemParaApi = enviarCoordenadasGps ? 'GPS' : textoOrigem;
 
     setState(() {
       _isLoading = true;
@@ -315,6 +357,7 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                             const SizedBox(height: 12),
                             TextField(
                               controller: _destinoController,
+                              onChanged: (_) => setState(() {}),
                               onSubmitted: (_) => _calcularRota(),
                               decoration: InputDecoration(
                                 labelText: 'Destino',
@@ -400,7 +443,9 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                                     _usandoGpsNaOrigem = false;
                                     _origemController.text = orig;
                                   });
-                                  _calcularRota();
+                                  if (_destinoController.text.trim().isNotEmpty) {
+                                    _calcularRota();
+                                  }
                                 }
                               },
                             ),
@@ -555,6 +600,49 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     color: colors.onErrorContainer,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+              ),
+            )
+          else if (_rotaPlanejada == null)
+            Card(
+              elevation: 0,
+              color: AppTheme.softSurface(context),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+                side: BorderSide(color: colors.outlineVariant),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.explore_outlined,
+                      size: 44,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Para onde você deseja ir?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _posicaoGps != null
+                          ? 'Partida definida por ${_posicaoGps!.gpsRealDispositivo ? 'GPS real do aparelho' : _posicaoGps!.descricaoOrigem}. Digite um destino acima ou toque em uma sugestão e clique em "Traçar Rota".'
+                          : 'Digite um destino acima ou toque em uma sugestão de destino frequente e clique em "Traçar Rota".',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )

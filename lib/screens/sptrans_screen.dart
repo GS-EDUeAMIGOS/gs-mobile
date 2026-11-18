@@ -37,7 +37,7 @@ class _SptransScreenState extends State<SptransScreen> {
   Timer? _timerTempoReal;
 
   // Estado da Aba 0: Paradas, GPS do Celular, Mapa e Previsão de Chegada no Ponto
-  final _termoParadaController = TextEditingController(text: 'PAULISTA');
+  final _termoParadaController = TextEditingController();
   final _filtroLinhaNoPontoController = TextEditingController();
   PosicaoUsuarioGps? _posicaoGps;
   String? _mensagemGpsPonto;
@@ -49,7 +49,7 @@ class _SptransScreenState extends State<SptransScreen> {
   bool _isLoadingPrevisao = false;
 
   // Estado da Aba 1: Linhas, Frota na Rua e Paradas da Linha
-  final _termoLinhaController = TextEditingController(text: '8000');
+  final _termoLinhaController = TextEditingController();
   List<LinhaResumoModel> _linhas = [];
   LinhaResumoModel? _linhaSelecionada;
   int? _codigoLinhaAvulso;
@@ -58,7 +58,7 @@ class _SptransScreenState extends State<SptransScreen> {
   ParadaResumoModel? _paradaDaLinhaSelecionada;
   bool _isLoadingLinhas = false;
   bool _isLoadingVeiculos = false;
-  String _ultimoTermoLinha = '8000';
+  String _ultimoTermoLinha = '';
 
   String? _errorMessage;
   bool _initializedArgs = false;
@@ -79,7 +79,7 @@ class _SptransScreenState extends State<SptransScreen> {
         _abaSelecionada = 1;
         _codigoLinhaAvulso = args;
         _buscarLinhas(selecionarCodigoAutomatico: args);
-        _buscarParadas();
+        _localizarPontosPeloMeuGps();
       } else if (args is Map<String, dynamic>) {
         _abaSelecionada = (args['aba'] as int?) ?? 0;
         if (args['termoParada'] != null) {
@@ -89,11 +89,13 @@ class _SptransScreenState extends State<SptransScreen> {
           _filtroLinhaNoPontoController.text = args['linhaFiltro'].toString();
         }
         final int? codigoParadaAlvo = args['codigoParada'] as int?;
-        _buscarParadas(codigoParadaPreferencial: codigoParadaAlvo);
-        _buscarLinhas();
+        if (_termoParadaController.text.trim().isNotEmpty) {
+          _buscarParadas(codigoParadaPreferencial: codigoParadaAlvo);
+        } else {
+          _localizarPontosPeloMeuGps();
+        }
       } else {
         _localizarPontosPeloMeuGps();
-        _buscarLinhas();
       }
     }
   }
@@ -179,13 +181,15 @@ class _SptransScreenState extends State<SptransScreen> {
       );
       if (!mounted) return;
 
-      final termoDetectado = respGps.localAtual?.termoBuscaSptrans ?? 'PAULISTA';
+      final termoDetectado = respGps.localAtual?.termoBuscaSptrans ?? '';
       setState(() {
         _posicaoGps = gps;
         _mensagemGpsPonto = respGps.mensagemProximidade;
         _usuarioEstaNoPonto = respGps.usuarioEstaNoPonto;
         _paradas = respGps.paradasProximas;
-        _termoParadaController.text = termoDetectado;
+        if (termoDetectado.isNotEmpty) {
+          _termoParadaController.text = termoDetectado;
+        }
         _isLoadingParadas = false;
       });
 
@@ -196,14 +200,28 @@ class _SptransScreenState extends State<SptransScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      await _buscarParadas();
+      if (_termoParadaController.text.trim().isNotEmpty) {
+        await _buscarParadas();
+      } else {
+        setState(() {
+          _isLoadingParadas = false;
+          _errorMessage =
+              'Não foi possível localizar paradas próximas pelo GPS. Digite uma avenida ou parada acima.';
+        });
+      }
     }
   }
 
   Future<void> _buscarParadas({int? codigoParadaPreferencial}) async {
-    final termo = _termoParadaController.text.trim().isEmpty
-        ? 'PAULISTA'
-        : _termoParadaController.text.trim();
+    final termo = _termoParadaController.text.trim();
+    if (termo.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Digite o nome de uma avenida ou parada para buscar.'),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _isLoadingParadas = true;
@@ -267,9 +285,19 @@ class _SptransScreenState extends State<SptransScreen> {
   // ===========================================================================
 
   Future<void> _buscarLinhas({int? selecionarCodigoAutomatico}) async {
-    final termo = _termoLinhaController.text.trim().isEmpty
-        ? '8000'
-        : _termoLinhaController.text.trim();
+    final termo = _termoLinhaController.text.trim();
+    if (termo.isEmpty) {
+      if (selecionarCodigoAutomatico != null) {
+        await _carregarVeiculosEParadasPorCodigo(selecionarCodigoAutomatico);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Digite o número ou nome da linha para consultar.'),
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() {
       _isLoadingLinhas = true;

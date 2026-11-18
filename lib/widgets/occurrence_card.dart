@@ -10,11 +10,7 @@ class OccurrenceCard extends StatelessWidget {
   final OcorrenciaModel ocorrencia;
   final VoidCallback? onTap;
 
-  const OccurrenceCard({
-    super.key,
-    required this.ocorrencia,
-    this.onTap,
-  });
+  const OccurrenceCard({super.key, required this.ocorrencia, this.onTap});
 
   Color _gravidadeColor(NivelGravidade gravidade, BuildContext context) {
     switch (gravidade) {
@@ -50,6 +46,7 @@ class OccurrenceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final gravidadeCor = _gravidadeColor(ocorrencia.gravidade, context);
+    final linha = ocorrencia.linhaEmDestaque;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -66,7 +63,10 @@ class OccurrenceCard extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: colors.primary.withValues(alpha: 0.14),
                         borderRadius: BorderRadius.circular(20),
@@ -74,7 +74,11 @@ class OccurrenceCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(_tipoIcon(ocorrencia.tipo), size: 15, color: colors.primary),
+                          Icon(
+                            _tipoIcon(ocorrencia.tipo),
+                            size: 15,
+                            color: colors.primary,
+                          ),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
@@ -94,7 +98,10 @@ class OccurrenceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: gravidadeCor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(20),
@@ -123,6 +130,46 @@ class OccurrenceCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
+              if (linha != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: colors.secondary.withValues(alpha: 0.65),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.directions_bus_filled_outlined,
+                        size: 19,
+                        color: colors.onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Linha: $linha',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.onSecondaryContainer,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
               // Título da Ocorrência
               Text(
                 ocorrencia.titulo,
@@ -136,7 +183,7 @@ class OccurrenceCard extends StatelessWidget {
 
               // Descrição resumida (máximo de 2 linhas no card)
               Text(
-                ocorrencia.descricao,
+                ocorrencia.descricaoSemTagLinha,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -150,20 +197,20 @@ class OccurrenceCard extends StatelessWidget {
               // Rodapé com Linha/Parada, Status e seta indicando navegação para detalhes
               Row(
                 children: [
-                  if (ocorrencia.prefixoVeiculo != null && ocorrencia.prefixoVeiculo!.isNotEmpty) ...[
-                    Icon(Icons.directions_bus, size: 16, color: colors.onSurfaceVariant),
+                  if (ocorrencia.prefixoVeiculo != null &&
+                      ocorrencia.prefixoVeiculo!.isNotEmpty) ...[
+                    Icon(
+                      Icons.directions_bus,
+                      size: 16,
+                      color: colors.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Ônibus nº ${ocorrencia.prefixoVeiculo}',
-                      style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
-                    ),
-                    const SizedBox(width: 12),
-                  ] else if (ocorrencia.codigoLinha != null) ...[
-                    Icon(Icons.route, size: 16, color: colors.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Linha SPTrans vinculada',
-                      style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(width: 12),
                   ],

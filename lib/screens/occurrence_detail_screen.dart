@@ -99,15 +99,14 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
           title: const Text('Detalhes da Ocorrência'),
           actions: const [ThemeSelectorButton()],
         ),
-        body: const Center(
-          child: Text('Nenhuma ocorrência selecionada.'),
-        ),
+        body: const Center(child: Text('Nenhuma ocorrência selecionada.')),
       );
     }
 
     final ocorrencia = args;
     final isAuthenticated = ApiService.instance.isAuthenticated;
     final colors = Theme.of(context).colorScheme;
+    final linha = ocorrencia.linhaEmDestaque;
 
     return Scaffold(
       appBar: AppBar(
@@ -122,10 +121,15 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
                   : const Icon(Icons.delete_outline),
-              onPressed: _isDeleting ? null : () => _confirmarExclusao(ocorrencia),
+              onPressed: _isDeleting
+                  ? null
+                  : () => _confirmarExclusao(ocorrencia),
             ),
         ],
       ),
@@ -149,12 +153,17 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                           runSpacing: 8,
                           children: [
                             Chip(
-                              avatar: const Icon(Icons.category_outlined, size: 16),
+                              avatar: const Icon(
+                                Icons.category_outlined,
+                                size: 16,
+                              ),
                               label: Text(ocorrencia.tipo.label),
                             ),
                             Chip(
                               avatar: const Icon(Icons.priority_high, size: 16),
-                              label: Text('Gravidade: ${ocorrencia.gravidade.label}'),
+                              label: Text(
+                                'Gravidade: ${ocorrencia.gravidade.label}',
+                              ),
                             ),
                             Chip(
                               avatar: const Icon(Icons.info_outline, size: 16),
@@ -163,6 +172,51 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                           ],
                         ),
                         const SizedBox(height: 16),
+                        if (linha != null) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: colors.secondaryContainer,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: colors.secondary),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.directions_bus_filled_outlined,
+                                  color: colors.onSecondaryContainer,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Linha informada',
+                                        style: TextStyle(
+                                          color: colors.onSecondaryContainer,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        linha,
+                                        style: TextStyle(
+                                          color: colors.onSecondaryContainer,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         Text(
                           ocorrencia.titulo,
                           style: TextStyle(
@@ -173,7 +227,7 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          ocorrencia.descricao,
+                          ocorrencia.descricaoSemTagLinha,
                           style: TextStyle(
                             fontSize: 16,
                             height: 1.5,
@@ -198,13 +252,16 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                           label: 'Reportado por',
                           value: ocorrencia.nomeUsuario ?? 'Cidadão cadastrado',
                         ),
-                        if (ocorrencia.codigoLinha != null)
+                        if (ocorrencia.codigoLinha != null &&
+                            ocorrencia.codigoLinha! > 0 &&
+                            linha != ocorrencia.codigoLinha.toString())
                           _InfoRow(
                             icon: Icons.directions_bus,
-                            label: 'Linha SPTrans',
+                            label: 'Código oficial da linha na SPTrans',
                             value: '${ocorrencia.codigoLinha}',
                           ),
-                        if (ocorrencia.codigoParada != null)
+                        if (ocorrencia.codigoParada != null &&
+                            ocorrencia.codigoParada! > 0)
                           _InfoRow(
                             icon: Icons.place_outlined,
                             label: 'Parada SPTrans',
@@ -230,7 +287,8 @@ class _OccurrenceDetailScreenState extends State<OccurrenceDetailScreen> {
                 const SizedBox(height: 16),
 
                 // Botão de integração direta com o Radar SPTrans caso a ocorrência tenha linha vinculada
-                if (ocorrencia.codigoLinha != null)
+                if (ocorrencia.codigoLinha != null &&
+                    ocorrencia.codigoLinha! > 0)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.secondaryTeal,

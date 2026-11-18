@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:viacidada_mobile/main.dart';
 import 'package:viacidada_mobile/models/olho_vivo_model.dart';
 import 'package:viacidada_mobile/screens/route_navigation_screen.dart';
+import 'package:viacidada_mobile/screens/route_planner_screen.dart';
 import 'package:viacidada_mobile/services/paradas_linha_fallback_helper.dart';
 import 'package:viacidada_mobile/widgets/ponto_map_widget.dart';
 
@@ -195,6 +197,30 @@ void main() {
     expect(
       PontoMapWidget.formatarHorarioAmigavel('14:05:30'),
       'Atualizado às 14:05',
+    );
+  });
+
+  testWidgets(
+      'RoutePlannerScreen inicia com destino vazio e nao dispara busca automatica',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RoutePlannerScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verifica que os dois campos de texto (Partida e Destino) existem
+    final textFields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+    expect(textFields.length, 2);
+    expect(textFields[0].controller?.text, 'Minha Localização Atual (GPS)');
+    expect(textFields[1].controller?.text, isEmpty);
+
+    // Garante que não disparou busca automática
+    expect(find.text('Para onde você deseja ir?'), findsOneWidget);
+    expect(
+      find.text('Calculando rota e consultando linhas disponíveis...'),
+      findsNothing,
     );
   });
 }
