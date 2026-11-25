@@ -119,21 +119,7 @@ class _SptransScreenState extends State<SptransScreen> {
 
   Future<void> _executarRefreshSilencioso() async {
     if (_atualizandoSilenciosamente) return;
-    if (_abaSelecionada == 0 && _paradaSelecionada != null) {
-      setState(() => _atualizandoSilenciosamente = true);
-      try {
-        final prev = await ApiService.instance
-            .buscarPrevisoesPorParada(_paradaSelecionada!.codigoParada);
-        if (!mounted) return;
-        setState(() {
-          _previsaoParada = prev;
-          _ultimaAtualizacao = DateTime.now();
-          _atualizandoSilenciosamente = false;
-        });
-      } catch (_) {
-        if (mounted) setState(() => _atualizandoSilenciosamente = false);
-      }
-    } else if (_abaSelecionada == 1 && _codigoLinhaAvulso != null) {
+    if (_abaSelecionada == 1 && _codigoLinhaAvulso != null) {
       setState(() => _atualizandoSilenciosamente = true);
       try {
         final pos = await ApiService.instance
@@ -264,7 +250,10 @@ class _SptransScreenState extends State<SptransScreen> {
     });
 
     try {
-      final prev = await ApiService.instance.buscarPrevisoesPorParada(parada.codigoParada);
+      final prev = await ApiService.instance.buscarPrevisoesPorParada(
+        parada.codigoParada,
+        letreirosConhecidos: parada.letreirosNoPonto,
+      );
       if (!mounted) return;
       setState(() {
         _previsaoParada = prev;
@@ -401,37 +390,6 @@ class _SptransScreenState extends State<SptransScreen> {
   // CONVERSÃO DOS DADOS PARA PINOS DO MAPA
   // ===========================================================================
 
-  List<MapaVeiculoPin> _gerarPinosVeiculosNoPonto() {
-    final todasLinhasNoPonto = _previsaoParada?.parada?.linhas ?? [];
-    final filtroLinha = _filtroLinhaNoPontoController.text.trim().toUpperCase();
-    final linhasFiltradas = filtroLinha.isEmpty
-        ? todasLinhasNoPonto
-        : todasLinhasNoPonto.where((lp) {
-            return lp.letreiroCompleto.toUpperCase().contains(filtroLinha) ||
-                lp.destino.toUpperCase().contains(filtroLinha) ||
-                lp.origem.toUpperCase().contains(filtroLinha);
-          }).toList();
-
-    final List<MapaVeiculoPin> pinos = [];
-    for (final lp in (linhasFiltradas.isNotEmpty ? linhasFiltradas : todasLinhasNoPonto)) {
-      for (final v in lp.veiculos) {
-        if (v.possuiCoordenadas) {
-          pinos.add(
-            MapaVeiculoPin(
-              prefixo: v.prefixo,
-              letreiro: lp.letreiroCompleto,
-              acessivelPcD: v.acessivelPcD,
-              horarioChegada: v.horarioPrevistoChegada,
-              latitude: v.latitude,
-              longitude: v.longitude,
-            ),
-          );
-        }
-      }
-    }
-    return pinos;
-  }
-
   List<MapaVeiculoPin> _gerarPinosFrotaLinha() {
     final veiculos = _posicaoAtual?.veiculos ?? [];
     final letreiroAtual = _linhaSelecionada?.letreiroCompleto ??
@@ -515,8 +473,8 @@ class _SptransScreenState extends State<SptransScreen> {
                         paradas: _paradas,
                         paradaSelecionada: _paradaSelecionada,
                         onSelecionarParada: _selecionarParadaEBuscarPrevisao,
-                        veiculos: _gerarPinosVeiculosNoPonto(),
-                        tituloMapa: 'Estou no Ponto',
+                        veiculos: const [],
+                        tituloMapa: 'Pontos Próximos • Toque para ver as linhas',
                         linhaDestacada:
                             filtroLinha.isEmpty ? null : filtroLinha,
                         linhaPassaNestePonto: linhaConfirmadaNoPonto,
@@ -632,7 +590,7 @@ class _SptransScreenState extends State<SptransScreen> {
                 child: _CompactModePill(
                   selected: _abaSelecionada == 0,
                   icon: Icons.place,
-                  label: '1. No Ponto',
+                  label: '1. Linhas do Ponto',
                   onTap: () => setState(() => _abaSelecionada = 0),
                 ),
               ),
@@ -641,69 +599,71 @@ class _SptransScreenState extends State<SptransScreen> {
                 child: _CompactModePill(
                   selected: _abaSelecionada == 1,
                   icon: Icons.directions_bus,
-                  label: '2. Por Linha',
+                  label: '2. Frota da Linha',
                   onTap: () => setState(() => _abaSelecionada = 1),
                 ),
               ),
-              const SizedBox(width: 8),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  setState(() {
-                    _atualizacaoAutomatica = !_atualizacaoAutomatica;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _atualizacaoAutomatica
-                        ? AppTheme.badgeBgSuccess(context)
-                        : colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
+              if (_abaSelecionada == 1) ...[
+                const SizedBox(width: 8),
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    setState(() {
+                      _atualizacaoAutomatica = !_atualizacaoAutomatica;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
                       color: _atualizacaoAutomatica
-                          ? liveColor
-                          : colors.outlineVariant,
+                          ? AppTheme.badgeBgSuccess(context)
+                          : colors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _atualizacaoAutomatica
+                            ? liveColor
+                            : colors.outlineVariant,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_atualizandoSilenciosamente)
+                          SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.8,
+                              color: liveColor,
+                            ),
+                          )
+                        else
+                          Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: _atualizacaoAutomatica
+                                ? liveColor
+                                : colors.onSurfaceVariant,
+                          ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _atualizacaoAutomatica ? '15s' : 'Pausado',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: _atualizacaoAutomatica
+                                ? liveColor
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_atualizandoSilenciosamente)
-                        SizedBox(
-                          width: 10,
-                          height: 10,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.8,
-                            color: liveColor,
-                          ),
-                        )
-                      else
-                        Icon(
-                          Icons.circle,
-                          size: 8,
-                          color: _atualizacaoAutomatica
-                              ? liveColor
-                              : colors.onSurfaceVariant,
-                        ),
-                      const SizedBox(width: 5),
-                      Text(
-                        _atualizacaoAutomatica ? '15s' : 'Pausado',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: _atualizacaoAutomatica
-                              ? liveColor
-                              : colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -823,7 +783,7 @@ class _SptransScreenState extends State<SptransScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Como saber se você está no Ponto Correto?',
+                      'Descubra quais ônibus passam no seu ponto',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -835,8 +795,8 @@ class _SptransScreenState extends State<SptransScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Veja no mapa abaixo a posição exata da parada e o lado da avenida (B/C ou C/B). '
-                'Digite o número do seu ônibus para confirmar se ele passa neste ponto e acompanhar o trajeto da linha.',
+                'Toque em um ponto no mapa ou na lista para ver todas as linhas de ônibus que param nele. '
+                'Depois, toque em qualquer linha para acompanhar os ônibus ao vivo!',
                 style: TextStyle(
                   fontSize: 13,
                   height: 1.4,
@@ -855,8 +815,8 @@ class _SptransScreenState extends State<SptransScreen> {
               child: _ModeTabButton(
                 selected: _abaSelecionada == 0,
                 icon: Icons.place,
-                title: '1. Estou no Ponto',
-                subtitle: 'Mapa do ponto + Previsão',
+                title: '1. Linhas no Ponto',
+                subtitle: 'Quais ônibus passam aqui',
                 onTap: () => setState(() => _abaSelecionada = 0),
               ),
             ),
@@ -866,7 +826,7 @@ class _SptransScreenState extends State<SptransScreen> {
                 selected: _abaSelecionada == 1,
                 icon: Icons.directions_bus,
                 title: '2. Buscar por Linha',
-                subtitle: 'Frota, trajeto e paradas',
+                subtitle: 'Frota ao vivo e trajeto',
                 onTap: () => setState(() => _abaSelecionada = 1),
               ),
             ),
@@ -922,8 +882,6 @@ class _SptransScreenState extends State<SptransScreen> {
                 lp.letreiroCompleto.toUpperCase().contains(filtroLinha) ||
                 lp.destino.toUpperCase().contains(filtroLinha),
           );
-
-    final pinosVeiculosNoPonto = _gerarPinosVeiculosNoPonto();
 
     return [
       if (incluirMapaCard) ...[
@@ -1069,7 +1027,7 @@ class _SptransScreenState extends State<SptransScreen> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 102,
+          height: 118,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _paradas.take(12).length,
@@ -1077,6 +1035,10 @@ class _SptransScreenState extends State<SptransScreen> {
             itemBuilder: (context, index) {
               final p = _paradas[index];
               final isSelected = _paradaSelecionada?.codigoParada == p.codigoParada;
+              final resumoLetreiros = p.letreirosNoPonto.isEmpty
+                  ? null
+                  : 'Passam aqui: ${p.letreirosNoPonto.take(3).join(', ')}'
+                      '${p.letreirosNoPonto.length > 3 ? ' +${p.letreirosNoPonto.length - 3}' : ''}';
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () => _selecionarParadaEBuscarPrevisao(p),
@@ -1130,6 +1092,8 @@ class _SptransScreenState extends State<SptransScreen> {
                         ),
                         child: Text(
                           p.ladoDaViaExplicado,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -1139,10 +1103,15 @@ class _SptransScreenState extends State<SptransScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        p.endereco.isEmpty ? 'Código SPTrans: ${p.codigoParada}' : p.endereco,
+                        resumoLetreiros ??
+                            (p.endereco.isEmpty ? 'Código SPTrans: ${p.codigoParada}' : p.endereco),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: resumoLetreiros != null ? FontWeight.w700 : FontWeight.w400,
+                          color: resumoLetreiros != null ? colors.primary : colors.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -1158,8 +1127,8 @@ class _SptransScreenState extends State<SptransScreen> {
             paradas: _paradas,
             paradaSelecionada: _paradaSelecionada,
             onSelecionarParada: _selecionarParadaEBuscarPrevisao,
-            veiculos: pinosVeiculosNoPonto,
-            tituloMapa: 'Mapa do Ponto: Confira o lado da via',
+            veiculos: const [],
+            tituloMapa: 'Pontos Próximos • Toque para ver as linhas',
             linhaDestacada: filtroLinha.isEmpty ? null : filtroLinha,
             linhaPassaNestePonto: linhaConfirmadaNoPonto,
             usuarioLat: _posicaoGps?.latitude,
@@ -1174,7 +1143,7 @@ class _SptransScreenState extends State<SptransScreen> {
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
             isDense: true,
-            hintText: 'Filtrar linha neste ponto (ex.: 875A, 8000, Lapa...)',
+            hintText: 'Conferir se sua linha passa neste ponto (ex.: 407M, 875A...)',
             prefixIcon: const Icon(Icons.directions_bus_outlined),
             suffixIcon: _filtroLinhaNoPontoController.text.isNotEmpty
                 ? IconButton(
@@ -1277,7 +1246,7 @@ class _SptransScreenState extends State<SptransScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.timer_outlined,
+                    Icons.directions_bus_filled_outlined,
                     color: colors.primary,
                     size: 24,
                   ),
@@ -1288,7 +1257,7 @@ class _SptransScreenState extends State<SptransScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Painel Eletrônico: ${_paradaSelecionada!.nomeParada}',
+                        'Linhas que passam neste ponto',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -1296,8 +1265,8 @@ class _SptransScreenState extends State<SptransScreen> {
                         ),
                       ),
                       Text(
-                        '${_paradaSelecionada!.endereco} • ${_paradaSelecionada!.ladoDaViaExplicado}'
-                        '${_ultimaAtualizacao != null ? " • Ref. ${_formatarHoraAtualizacao()}" : ""}',
+                        '${_paradaSelecionada!.nomeParada}'
+                        '${_paradaSelecionada!.endereco.isNotEmpty ? " • ${_paradaSelecionada!.endereco}" : ""}',
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
@@ -1308,7 +1277,7 @@ class _SptransScreenState extends State<SptransScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Atualizar previsões de chegada',
+                  tooltip: 'Atualizar linhas da parada',
                   onPressed: () =>
                       _selecionarParadaEBuscarPrevisao(_paradaSelecionada!),
                   icon: Icon(Icons.refresh, color: colors.primary),
@@ -1325,8 +1294,7 @@ class _SptransScreenState extends State<SptransScreen> {
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Text(
-                  'Nenhum ônibus com previsão imediata neste minuto para este ponto. '
-                  'Toque em outro pino no mapa para checar o outro lado da avenida.',
+                  'Nenhuma linha catalogada para este ponto. Toque em outro ponto próximo no mapa.',
                   style: TextStyle(color: colors.onSurfaceVariant),
                 ),
               )
@@ -1351,7 +1319,7 @@ class _SptransScreenState extends State<SptransScreen> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'A linha "$filtroLinha" não aparece nas previsões deste ponto (${_paradaSelecionada!.nomeParada}).',
+                            'A linha "$filtroLinha" não passa neste ponto (${_paradaSelecionada!.nomeParada}).',
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               color: warningColor,
@@ -1370,7 +1338,7 @@ class _SptransScreenState extends State<SptransScreen> {
               )
             else ...[
               Text(
-                'Ônibus se aproximando (${linhasFiltradas.length} linhas):',
+                '${linhasFiltradas.length} linhas atendem esta parada:',
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
@@ -1381,123 +1349,111 @@ class _SptransScreenState extends State<SptransScreen> {
               ...linhasFiltradas.map((lp) {
                 final proximoVeiculo =
                     lp.veiculos.isNotEmpty ? lp.veiculos.first : null;
-                double? distanciaMetros;
-                if (proximoVeiculo != null &&
-                    proximoVeiculo.possuiCoordenadas &&
-                    _paradaSelecionada!.possuiCoordenadas) {
-                  distanciaMetros = PontoMapWidget.calcularDistanciaMetros(
-                    _paradaSelecionada!.latitude,
-                    _paradaSelecionada!.longitude,
-                    proximoVeiculo.latitude,
-                    proximoVeiculo.longitude,
-                  );
-                }
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
                     color: AppTheme.softSurface(context),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: colors.outlineVariant),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          lp.letreiroCompleto,
-                          style: TextStyle(
-                            color: colors.onPrimary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Destino: ${lp.destino}',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      setState(() {
+                        _abaSelecionada = 1;
+                        _termoLinhaController.text = lp.letreiroCompleto;
+                      });
+                      _buscarLinhas(
+                        selecionarCodigoAutomatico:
+                            lp.codigoLinha > 0 ? lp.codigoLinha : null,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(11),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              lp.letreiroCompleto,
                               style: TextStyle(
-                                fontSize: 13.5,
+                                color: colors.onPrimary,
                                 fontWeight: FontWeight.w800,
-                                color: colors.onSurface,
+                                fontSize: 12.5,
                               ),
                             ),
-                            if (proximoVeiculo != null)
-                              Row(
-                                children: [
-                                  if (proximoVeiculo.acessivelPcD) ...[
-                                    Icon(
-                                      Icons.accessible,
-                                      size: 13,
-                                      color: colors.secondary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                  ],
-                                  Expanded(
-                                    child: Text(
-                                      '${proximoVeiculo.acessivelPcD ? "Com Elevador PcD" : "Sem Elevador PcD"}'
-                                      '${distanciaMetros != null ? " • ${PontoMapWidget.formatarDistancia(distanciaMetros)}" : ""}',
-                                      style: TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: proximoVeiculo.acessivelPcD
-                                            ? colors.secondary
-                                            : warningColor,
-                                      ),
-                                    ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  lp.descricaoTrajeto,
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: colors.onSurface,
                                   ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (proximoVeiculo != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.badgeBgSuccess(context),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: successColor.withValues(alpha: 0.4),
+                                ),
+                                if (proximoVeiculo != null)
+                                  Row(
+                                    children: [
+                                      if (proximoVeiculo.acessivelPcD) ...[
+                                        Icon(
+                                          Icons.accessible,
+                                          size: 13,
+                                          color: colors.secondary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      Expanded(
+                                        child: Text(
+                                          '${proximoVeiculo.acessivelPcD ? "Com Elevador PcD" : "Sem Elevador PcD"} • Prev. ${proximoVeiculo.horarioPrevistoChegada}',
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: proximoVeiculo.acessivelPcD
+                                                ? colors.secondary
+                                                : warningColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
                             ),
                           ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'CHEGA ÀS',
-                                style: TextStyle(
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: successColor,
-                                ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Ver frota ➔',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: colors.primary,
                               ),
-                              Text(
-                                proximoVeiculo.horarioPrevistoChegada,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: successColor,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 );
               }),

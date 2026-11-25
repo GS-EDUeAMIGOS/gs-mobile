@@ -4,6 +4,7 @@ import 'package:viacidada_mobile/main.dart';
 import 'package:viacidada_mobile/models/olho_vivo_model.dart';
 import 'package:viacidada_mobile/screens/route_navigation_screen.dart';
 import 'package:viacidada_mobile/screens/route_planner_screen.dart';
+import 'package:viacidada_mobile/screens/sptrans_screen.dart';
 import 'package:viacidada_mobile/services/paradas_linha_fallback_helper.dart';
 import 'package:viacidada_mobile/widgets/ponto_map_widget.dart';
 
@@ -84,8 +85,8 @@ void main() {
       longitude: -46.6560,
     );
 
-    expect(paradaBC.ladoDaViaExplicado, 'Lado Bairro ➔ Centro (B/C)');
-    expect(paradaCB.ladoDaViaExplicado, 'Lado Centro ➔ Bairro (C/B)');
+    expect(paradaBC.ladoDaViaExplicado, 'Sentido Bairro ➔ Centro (B/C)');
+    expect(paradaCB.ladoDaViaExplicado, 'Sentido Centro ➔ Bairro (C/B)');
 
     final distancia = PontoMapWidget.calcularDistanciaMetros(
       paradaBC.latitude,
@@ -222,5 +223,45 @@ void main() {
       find.text('Calculando rota e consultando linhas disponíveis...'),
       findsNothing,
     );
+  });
+
+  test('Parseia letreirosNoPonto e descricaoTrajeto corretamente no model', () {
+    final parada = ParadaResumoModel.fromJson({
+      'cp': 140016034,
+      'np': 'PONTO RUA HEITOR PEIXOTO',
+      'ed': 'RUA HEITOR PEIXOTO - CAMBUCI • Ref.: R Heitor Peixoto/ R Basilio Da Cunha',
+      'py': -23.5754,
+      'px': -46.6187,
+      'letreirosNoPonto': ['407M-10', '4111-10'],
+    });
+
+    expect(parada.codigoParada, 140016034);
+    expect(parada.letreirosNoPonto, ['407M-10', '4111-10']);
+    expect(parada.ladoDaViaExplicado, 'Ref.: R Heitor Peixoto/ R Basilio Da Cunha');
+
+    final linha = LinhaPrevisaoModel.fromJson({
+      'c': '407M-10',
+      'cl': 101,
+      'sl': 1,
+      'lt0': 'METRÔ VILA MARIANA',
+      'lt1': 'LGO. CAMBUCI',
+      'qv': 0,
+      'vs': [],
+    });
+    expect(linha.descricaoTrajeto, 'LGO. CAMBUCI ➔ METRÔ VILA MARIANA');
+  });
+
+  testWidgets('SptransScreen exibe novos rotulos de Linhas do Ponto e Frota da Linha', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SptransScreen(),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('1. Linhas do Ponto'), findsOneWidget);
+    expect(find.text('2. Frota da Linha'), findsOneWidget);
   });
 }

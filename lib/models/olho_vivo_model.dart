@@ -91,6 +91,7 @@ class ParadaResumoModel {
   final String endereco;
   final double latitude;
   final double longitude;
+  final List<String> letreirosNoPonto;
 
   const ParadaResumoModel({
     required this.codigoParada,
@@ -98,15 +99,21 @@ class ParadaResumoModel {
     required this.endereco,
     required this.latitude,
     required this.longitude,
+    this.letreirosNoPonto = const [],
   });
 
   factory ParadaResumoModel.fromJson(Map<String, dynamic> json) {
+    final rawLetreiros = json['letreirosNoPonto'] as List<dynamic>? ?? [];
     return ParadaResumoModel(
       codigoParada: (json['cp'] as num?)?.toInt() ?? 0,
       nomeParada: json['np'] as String? ?? '',
       endereco: json['ed'] as String? ?? '',
       latitude: (json['py'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['px'] as num?)?.toDouble() ?? 0.0,
+      letreirosNoPonto: rawLetreiros
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList(),
     );
   }
 
@@ -116,12 +123,18 @@ class ParadaResumoModel {
   String get ladoDaViaExplicado {
     final upper = nomeParada.toUpperCase();
     if (upper.contains('B/C')) {
-      return 'Lado Bairro ➔ Centro (B/C)';
+      return 'Sentido Bairro ➔ Centro (B/C)';
     }
     if (upper.contains('C/B')) {
-      return 'Lado Centro ➔ Bairro (C/B)';
+      return 'Sentido Centro ➔ Bairro (C/B)';
     }
-    return 'Parada Oficial SPTrans';
+    final upperEnd = endereco.toUpperCase();
+    final idxRef = upperEnd.indexOf('REF.:');
+    if (idxRef != -1) {
+      final ref = endereco.substring(idxRef).trim();
+      if (ref.isNotEmpty) return ref;
+    }
+    return 'Ponto de Parada SPTrans';
   }
 }
 
@@ -188,6 +201,15 @@ class LinhaPrevisaoModel {
           .map((v) => VeiculoPrevisaoModel.fromJson(v as Map<String, dynamic>))
           .toList(),
     );
+  }
+
+  String get descricaoTrajeto {
+    if (origem.isNotEmpty && destino.isNotEmpty) {
+      return sentido == 1 ? '$origem ➔ $destino' : '$destino ➔ $origem';
+    }
+    if (destino.isNotEmpty) return destino;
+    if (origem.isNotEmpty) return origem;
+    return 'Linha Municipal SPTrans';
   }
 }
 

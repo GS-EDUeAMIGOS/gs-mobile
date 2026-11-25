@@ -494,15 +494,23 @@ class ApiService {
     }
   }
 
-  Future<PrevisaoParadaResponseModel> buscarPrevisoesPorParada(int codigoParada) async {
-    final uri = Uri.parse('$baseUrl/paradas/$codigoParada/previsoes');
+  Future<PrevisaoParadaResponseModel> buscarPrevisoesPorParada(
+    int codigoParada, {
+    List<String>? letreirosConhecidos,
+  }) async {
+    final hasLetreiros = letreirosConhecidos != null && letreirosConhecidos.isNotEmpty;
+    final uri = hasLetreiros
+        ? Uri.parse('$baseUrl/paradas/$codigoParada/linhas').replace(
+            queryParameters: {'letreiros': letreirosConhecidos.join(',')},
+          )
+        : Uri.parse('$baseUrl/paradas/$codigoParada/previsoes');
     final response = await http.get(uri, headers: _headers());
 
     if (response.statusCode == 200) {
       final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       return PrevisaoParadaResponseModel.fromJson(data);
     } else {
-      throw Exception(_extractErrorMessage(response, 'Erro ao consultar previsão de chegada na parada.'));
+      throw Exception(_extractErrorMessage(response, 'Erro ao consultar linhas que passam na parada.'));
     }
   }
 
