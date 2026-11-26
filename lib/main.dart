@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/favorites_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/occurrence_detail_screen.dart';
@@ -43,6 +44,7 @@ class ViaCidadaApp extends StatelessWidget {
           routes: {
             '/login': (context) => const LoginScreen(),
             '/home': (context) => const HomeScreen(),
+            '/favorites': (context) => const FavoritesScreen(),
             '/occurrences': (context) => const OccurrencesScreen(),
             '/occurrence-detail': (context) => const OccurrenceDetailScreen(),
             '/occurrence-form': (context) => const OccurrenceFormScreen(),

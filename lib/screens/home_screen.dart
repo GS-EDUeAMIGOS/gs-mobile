@@ -89,6 +89,13 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('ViaCidadã'),
         actions: [
+          IconButton(
+            tooltip: 'Meus Favoritos',
+            icon: const Icon(Icons.star_outline),
+            onPressed: () {
+              Navigator.pushNamed(context, '/favorites');
+            },
+          ),
           const ThemeSelectorButton(),
           IconButton(
             tooltip: 'Atualizar dados',
@@ -339,6 +346,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 );
               },
+            ),
+
+            const SizedBox(height: 14),
+
+            // Atalho para Meus Favoritos (Paradas e Linhas Favoritas do Backend Java)
+            Card(
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.star_rounded, color: colors.primary),
+                ),
+                title: const Text(
+                  'Meus Favoritos',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  'Paradas com acessibilidade e linhas salvas',
+                  style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+                ),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 15,
+                  color: colors.primary,
+                ),
+                onTap: () {
+                  Navigator.pushNamed(context, '/favorites');
+                },
+              ),
             ),
 
             const SizedBox(height: 28),

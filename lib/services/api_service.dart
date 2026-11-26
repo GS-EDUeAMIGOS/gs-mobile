@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_model.dart';
+import '../models/favorito_model.dart';
 import '../models/ocorrencia_model.dart';
 import '../models/olho_vivo_model.dart';
 
@@ -78,6 +79,54 @@ class ApiService {
       codigoParada: 340015329,
       afetaAcessibilidade: true,
       criadoEm: DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
+    ),
+  ];
+
+  final List<ParadaFavoritaModel> _mockParadasFavoritas = [
+    const ParadaFavoritaModel(
+      id: 1,
+      usuarioId: 2,
+      codigoParada: 340015329,
+      nomeParada: 'PARADA PAULISTA B/C',
+      endereco: 'Av. Paulista, 1578 - Bela Vista',
+      latitude: -23.5614,
+      longitude: -46.6559,
+      possuiRampaAcessivel: true,
+      possuiPisoTatil: true,
+    ),
+    const ParadaFavoritaModel(
+      id: 2,
+      usuarioId: 2,
+      codigoParada: 140016034,
+      nomeParada: 'RUA HEITOR PEIXOTO',
+      endereco: 'Rua Heitor Peixoto, 320 - Cambuci',
+      latitude: -23.5754,
+      longitude: -46.6187,
+      possuiRampaAcessivel: false,
+      possuiPisoTatil: false,
+    ),
+  ];
+
+  final List<LinhaFavoritaModel> _mockLinhasFavoritas = [
+    const LinhaFavoritaModel(
+      id: 1,
+      usuarioId: 2,
+      codigoLinha: 2506,
+      letreiro: '8000-10',
+      sentido: 1,
+      terminalOrigem: 'TERM. LAPA',
+      terminalDestino: 'PÇA. RAMOS DE AZEVEDO',
+      apelido: 'Ônibus do Trabalho',
+    ),
+    const LinhaFavoritaModel(
+      id: 2,
+      usuarioId: 2,
+      codigoLinha: 101,
+      letreiro: '407M-10',
+      sentido: 1,
+      terminalOrigem: 'LGO. CAMBUCI',
+      terminalDestino: 'METRÔ VILA MARIANA',
+      apelido: 'Ida para Faculdade',
     ),
   ];
 
@@ -595,6 +644,135 @@ class ApiService {
       return RotaPlanejadaResponseModel.fromJson(data);
     } else {
       throw Exception(_extractErrorMessage(response, 'Erro ao calcular rota inteligente na SPTrans.'));
+    }
+  }
+
+  // ===========================================================================
+  // 4. FAVORITOS (/api/paradas-favoritas e /api/linhas-favoritas)
+  // ===========================================================================
+
+  Future<List<ParadaFavoritaModel>> listarParadasFavoritas({
+    required int usuarioId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/paradas-favoritas').replace(
+        queryParameters: {
+          'usuarioId': usuarioId.toString(),
+          'size': '50',
+          'sort': 'id,desc',
+        },
+      );
+      final response = await http.get(uri, headers: _headers(includeAuth: true));
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        final content = decoded['content'] as List<dynamic>? ?? [];
+        return content
+            .map((item) => ParadaFavoritaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Erro ao carregar paradas favoritas.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        return List<ParadaFavoritaModel>.from(_mockParadasFavoritas);
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<ParadaFavoritaModel>> listarParadasFavoritasAcessiveis({
+    required int usuarioId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/paradas-favoritas/acessiveis').replace(
+        queryParameters: {'usuarioId': usuarioId.toString()},
+      );
+      final response = await http.get(uri, headers: _headers(includeAuth: true));
+
+      if (response.statusCode == 200) {
+        final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+        return list
+            .map((item) => ParadaFavoritaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Erro ao filtrar paradas favoritas acessíveis.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        return _mockParadasFavoritas.where((p) => p.isAcessivel).toList();
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<LinhaFavoritaModel>> listarLinhasFavoritas({
+    required int usuarioId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/linhas-favoritas').replace(
+        queryParameters: {
+          'usuarioId': usuarioId.toString(),
+          'size': '50',
+          'sort': 'id,desc',
+        },
+      );
+      final response = await http.get(uri, headers: _headers(includeAuth: true));
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        final content = decoded['content'] as List<dynamic>? ?? [];
+        return content
+            .map((item) => LinhaFavoritaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Erro ao carregar linhas favoritas.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        return List<LinhaFavoritaModel>.from(_mockLinhasFavoritas);
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<LinhaFavoritaModel>> buscarLinhasFavoritasPorTermo({
+    required int usuarioId,
+    required String termo,
+  }) async {
+    final termoLimpo = termo.trim();
+    if (termoLimpo.isEmpty) {
+      return listarLinhasFavoritas(usuarioId: usuarioId);
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/linhas-favoritas/busca').replace(
+        queryParameters: {
+          'usuarioId': usuarioId.toString(),
+          'termo': termoLimpo,
+        },
+      );
+      final response = await http.get(uri, headers: _headers(includeAuth: true));
+
+      if (response.statusCode == 200) {
+        final list = jsonDecode(utf8.decode(response.bodyBytes)) as List<dynamic>;
+        return list
+            .map((item) => LinhaFavoritaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Erro ao buscar linhas favoritas.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        final q = termoLimpo.toLowerCase();
+        return _mockLinhasFavoritas.where((linha) {
+          return linha.letreiro.toLowerCase().contains(q) ||
+              (linha.apelido?.toLowerCase().contains(q) ?? false) ||
+              (linha.terminalOrigem?.toLowerCase().contains(q) ?? false) ||
+              (linha.terminalDestino?.toLowerCase().contains(q) ?? false);
+        }).toList();
+      }
+      rethrow;
     }
   }
 
