@@ -112,6 +112,42 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     }
   }
 
+  Future<void> _removerParada(ParadaFavoritaModel parada) async {
+    try {
+      await ApiService.instance.removerParadaFavorita(parada.id);
+      if (!mounted) return;
+      setState(() {
+        _paradas.removeWhere((p) => p.id == parada.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Parada "${parada.nomeParada}" removida dos favoritos.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _removerLinha(LinhaFavoritaModel linha) async {
+    try {
+      await ApiService.instance.removerLinhaFavorita(linha.id);
+      if (!mounted) return;
+      setState(() {
+        _linhas.removeWhere((l) => l.id == linha.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Linha "${linha.letreiro}" removida dos favoritos.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAuthenticated = ApiService.instance.isAuthenticated;
@@ -262,7 +298,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   : 'Quando houver paradas favoritadas na sua conta, elas aparecerão aqui.',
             )
           else
-            ..._paradas.map((parada) => _ParadaFavoritaCard(parada: parada)),
+            ..._paradas.map(
+              (parada) => _ParadaFavoritaCard(
+                parada: parada,
+                onRemover: () => _removerParada(parada),
+              ),
+            ),
         ],
       ),
     );
@@ -330,7 +371,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   : 'Quando houver linhas favoritadas na sua conta, elas aparecerão aqui.',
             )
           else
-            ..._linhas.map((linha) => _LinhaFavoritaCard(linha: linha)),
+            ..._linhas.map(
+              (linha) => _LinhaFavoritaCard(
+                linha: linha,
+                onRemover: () => _removerLinha(linha),
+              ),
+            ),
         ],
       ),
     );
@@ -416,8 +462,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
 class _ParadaFavoritaCard extends StatelessWidget {
   final ParadaFavoritaModel parada;
+  final VoidCallback onRemover;
 
-  const _ParadaFavoritaCard({required this.parada});
+  const _ParadaFavoritaCard({
+    required this.parada,
+    required this.onRemover,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -477,6 +527,11 @@ class _ParadaFavoritaCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                IconButton(
+                  tooltip: 'Remover dos favoritos',
+                  icon: Icon(Icons.delete_outline, color: colors.error),
+                  onPressed: onRemover,
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -511,8 +566,12 @@ class _ParadaFavoritaCard extends StatelessWidget {
 
 class _LinhaFavoritaCard extends StatelessWidget {
   final LinhaFavoritaModel linha;
+  final VoidCallback onRemover;
 
-  const _LinhaFavoritaCard({required this.linha});
+  const _LinhaFavoritaCard({
+    required this.linha,
+    required this.onRemover,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -573,6 +632,11 @@ class _LinhaFavoritaCard extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              tooltip: 'Remover dos favoritos',
+              icon: Icon(Icons.delete_outline, color: colors.error),
+              onPressed: onRemover,
             ),
           ],
         ),

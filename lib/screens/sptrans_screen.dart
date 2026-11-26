@@ -63,10 +63,16 @@ class _SptransScreenState extends State<SptransScreen> {
   String? _errorMessage;
   bool _initializedArgs = false;
 
+  // Mapas de favoritos do usuário logado: codigoParada/codigoLinha -> id do registro favorito
+  Map<int, int> _favoritoParadaIdPorCodigo = {};
+  Map<int, int> _favoritoLinhaIdPorCodigo = {};
+  bool _salvandoFavorito = false;
+
   @override
   void initState() {
     super.initState();
     _iniciarTimerTempoReal();
+    _carregarFavoritosUsuario();
   }
 
   @override
@@ -142,6 +148,138 @@ class _SptransScreenState extends State<SptransScreen> {
     final m = _ultimaAtualizacao!.minute.toString().padLeft(2, '0');
     final s = _ultimaAtualizacao!.second.toString().padLeft(2, '0');
     return '$h:$m:$s';
+  }
+
+  Future<void> _carregarFavoritosUsuario() async {
+    final user = ApiService.instance.currentUser;
+    if (user == null) return;
+    try {
+      final resultados = await Future.wait([
+        ApiService.instance.listarParadasFavoritas(usuarioId: user.usuarioId),
+        ApiService.instance.listarLinhasFavoritas(usuarioId: user.usuarioId),
+      ]);
+      if (!mounted) return;
+      final paradas = resultados[0] as List<dynamic>;
+      final linhas = resultados[1] as List<dynamic>;
+      setState(() {
+        _favoritoParadaIdPorCodigo = {
+          for (final p in paradas) p.codigoParada as int: p.id as int,
+        };
+        _favoritoLinhaIdPorCodigo = {
+          for (final l in linhas) l.codigoLinha as int: l.id as int,
+        };
+      });
+    } catch (_) {
+      // Silencioso: se falhar ao sincronizar favoritos iniciais, não bloqueia o Radar SPTrans.
+    }
+  }
+
+  void _avisarLoginNecessarioParaFavoritar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Faça login para salvar paradas e linhas nos favoritos.'),
+        action: SnackBarAction(
+          label: 'Entrar',
+          onPressed: () {
+            Navigator.pushNamed(context, '/login');
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _alternarFavoritoParada(ParadaResumoModel parada) async {
+    final user = ApiService.instance.currentUser;
+    if (user == null) {
+      _avisarLoginNecessarioParaFavoritar();
+      return;
+    }
+    if (_salvandoFavorito) return;
+    setState(() => _salvandoFavorito = true);
+
+    try {
+      final favoritoId = _favoritoParadaIdPorCodigo[parada.codigoParada];
+      if (favoritoId != null) {
+        await ApiService.instance.removerParadaFavorita(favoritoId);
+        if (!mounted) return;
+        setState(() {
+          _favoritoParadaIdPorCodigo.remove(parada.codigoParada);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Parada "${parada.nomeParada}" removida dos favoritos.')),
+        );
+      } else {
+        final criado = await ApiService.instance.favoritarParada(
+          usuarioId: user.usuarioId,
+          codigoParada: parada.codigoParada,
+          nomeParada: parada.nomeParada,
+          endereco: parada.endereco,
+          latitude: parada.possuiCoordenadas ? parada.latitude : null,
+          longitude: parada.possuiCoordenadas ? parada.longitude : null,
+        );
+        if (!mounted) return;
+        setState(() {
+          _favoritoParadaIdPorCodigo[parada.codigoParada] = criado.id;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Parada "${parada.nomeParada}" salva nos favoritos!')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _salvandoFavorito = false);
+    }
+  }
+
+  Future<void> _alternarFavoritoLinha(LinhaResumoModel linha) async {
+    final user = ApiService.instance.currentUser;
+    if (user == null) {
+      _avisarLoginNecessarioParaFavoritar();
+      return;
+    }
+    if (_salvandoFavorito) return;
+    setState(() => _salvandoFavorito = true);
+
+    try {
+      final favoritoId = _favoritoLinhaIdPorCodigo[linha.codigoLinha];
+      if (favoritoId != null) {
+        await ApiService.instance.removerLinhaFavorita(favoritoId);
+        if (!mounted) return;
+        setState(() {
+          _favoritoLinhaIdPorCodigo.remove(linha.codigoLinha);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Linha "${linha.letreiroCompleto}" removida dos favoritos.')),
+        );
+      } else {
+        final criado = await ApiService.instance.favoritarLinha(
+          usuarioId: user.usuarioId,
+          codigoLinha: linha.codigoLinha,
+          letreiro: linha.letreiroCompleto,
+          sentido: linha.sentido,
+          terminalOrigem: linha.sentido == 1 ? linha.terminalPrincipal : linha.terminalSecundario,
+          terminalDestino: linha.sentido == 1 ? linha.terminalSecundario : linha.terminalPrincipal,
+        );
+        if (!mounted) return;
+        setState(() {
+          _favoritoLinhaIdPorCodigo[linha.codigoLinha] = criado.id;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Linha "${linha.letreiroCompleto}" salva nos favoritos!')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _salvandoFavorito = false);
+    }
   }
 
   // ===========================================================================
@@ -1277,6 +1415,25 @@ class _SptransScreenState extends State<SptransScreen> {
                   ),
                 ),
                 IconButton(
+                  tooltip: _favoritoParadaIdPorCodigo
+                          .containsKey(_paradaSelecionada!.codigoParada)
+                      ? 'Remover parada dos favoritos'
+                      : 'Favoritar esta parada',
+                  onPressed: _salvandoFavorito
+                      ? null
+                      : () => _alternarFavoritoParada(_paradaSelecionada!),
+                  icon: Icon(
+                    _favoritoParadaIdPorCodigo
+                            .containsKey(_paradaSelecionada!.codigoParada)
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    color: _favoritoParadaIdPorCodigo
+                            .containsKey(_paradaSelecionada!.codigoParada)
+                        ? Colors.amber.shade700
+                        : colors.primary,
+                  ),
+                ),
+                IconButton(
                   tooltip: 'Atualizar linhas da parada',
                   onPressed: () =>
                       _selecionarParadaEBuscarPrevisao(_paradaSelecionada!),
@@ -1647,6 +1804,25 @@ class _SptransScreenState extends State<SptransScreen> {
                         ],
                       ),
                     ),
+                    IconButton(
+                      tooltip: _favoritoLinhaIdPorCodigo
+                              .containsKey(linha.codigoLinha)
+                          ? 'Remover linha dos favoritos'
+                          : 'Favoritar esta linha',
+                      onPressed: _salvandoFavorito
+                          ? null
+                          : () => _alternarFavoritoLinha(linha),
+                      icon: Icon(
+                        _favoritoLinhaIdPorCodigo
+                                .containsKey(linha.codigoLinha)
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        color: _favoritoLinhaIdPorCodigo
+                                .containsKey(linha.codigoLinha)
+                            ? Colors.amber.shade700
+                            : colors.onSurfaceVariant,
+                      ),
+                    ),
                     Icon(
                       isSelected ? Icons.radar : Icons.chevron_right,
                       color: isSelected ? colors.primary : colors.onSurfaceVariant,
@@ -1732,6 +1908,26 @@ class _SptransScreenState extends State<SptransScreen> {
                         ],
                       ),
                     ),
+                    if (_linhaSelecionada != null)
+                      IconButton(
+                        tooltip: _favoritoLinhaIdPorCodigo
+                                .containsKey(_linhaSelecionada!.codigoLinha)
+                            ? 'Remover linha dos favoritos'
+                            : 'Favoritar esta linha',
+                        onPressed: _salvandoFavorito
+                            ? null
+                            : () => _alternarFavoritoLinha(_linhaSelecionada!),
+                        icon: Icon(
+                          _favoritoLinhaIdPorCodigo
+                                  .containsKey(_linhaSelecionada!.codigoLinha)
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: _favoritoLinhaIdPorCodigo
+                                  .containsKey(_linhaSelecionada!.codigoLinha)
+                              ? Colors.amber.shade700
+                              : colors.secondary,
+                        ),
+                      ),
                     IconButton(
                       tooltip: 'Atualizar frota',
                       icon: Icon(Icons.refresh, color: colors.secondary),

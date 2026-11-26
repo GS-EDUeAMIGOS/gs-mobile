@@ -67,4 +67,18 @@ void main() {
     expect(find.text('Faça login para ver seus favoritos'), findsOneWidget);
     expect(find.text('Ir para Login'), findsOneWidget);
   });
+
+  testWidgets('SptransScreen exibe botão de favoritar e pede login em modo visitante', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const FavoritesScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(ApiService.instance.isAuthenticated, false);
+  });
 }

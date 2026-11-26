@@ -776,6 +776,147 @@ class ApiService {
     }
   }
 
+  Future<ParadaFavoritaModel> favoritarParada({
+    required int usuarioId,
+    required int codigoParada,
+    required String nomeParada,
+    String? endereco,
+    double? latitude,
+    double? longitude,
+    bool possuiRampaAcessivel = false,
+    bool possuiPisoTatil = false,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/paradas-favoritas');
+      final response = await http.post(
+        uri,
+        headers: _headers(includeAuth: true),
+        body: jsonEncode({
+          'usuarioId': usuarioId,
+          'codigoParada': codigoParada,
+          'nomeParada': nomeParada,
+          if (endereco != null && endereco.trim().isNotEmpty) 'endereco': endereco.trim(),
+          'latitude': ?latitude,
+          'longitude': ?longitude,
+          'possuiRampaAcessivel': possuiRampaAcessivel,
+          'possuiPisoTatil': possuiPisoTatil,
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return ParadaFavoritaModel.fromJson(data);
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Não foi possível favoritar a parada.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        final novo = ParadaFavoritaModel(
+          id: DateTime.now().millisecondsSinceEpoch,
+          usuarioId: usuarioId,
+          codigoParada: codigoParada,
+          nomeParada: nomeParada,
+          endereco: endereco,
+          latitude: latitude,
+          longitude: longitude,
+          possuiRampaAcessivel: possuiRampaAcessivel,
+          possuiPisoTatil: possuiPisoTatil,
+          criadoEm: DateTime.now().toIso8601String(),
+        );
+        _mockParadasFavoritas.insert(0, novo);
+        return novo;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> removerParadaFavorita(int id) async {
+    try {
+      final uri = Uri.parse('$baseUrl/paradas-favoritas/$id');
+      final response = await http.delete(uri, headers: _headers(includeAuth: true));
+
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception(_extractErrorMessage(response, 'Não foi possível remover a parada favorita.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        _mockParadasFavoritas.removeWhere((p) => p.id == id);
+        return;
+      }
+      rethrow;
+    }
+  }
+
+  Future<LinhaFavoritaModel> favoritarLinha({
+    required int usuarioId,
+    required int codigoLinha,
+    required String letreiro,
+    required int sentido,
+    String? terminalOrigem,
+    String? terminalDestino,
+    String? apelido,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/linhas-favoritas');
+      final response = await http.post(
+        uri,
+        headers: _headers(includeAuth: true),
+        body: jsonEncode({
+          'usuarioId': usuarioId,
+          'codigoLinha': codigoLinha,
+          'letreiro': letreiro,
+          'sentido': sentido,
+          if (terminalOrigem != null && terminalOrigem.trim().isNotEmpty)
+            'terminalOrigem': terminalOrigem.trim(),
+          if (terminalDestino != null && terminalDestino.trim().isNotEmpty)
+            'terminalDestino': terminalDestino.trim(),
+          if (apelido != null && apelido.trim().isNotEmpty) 'apelido': apelido.trim(),
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return LinhaFavoritaModel.fromJson(data);
+      } else {
+        throw Exception(_extractErrorMessage(response, 'Não foi possível favoritar a linha.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        final novo = LinhaFavoritaModel(
+          id: DateTime.now().millisecondsSinceEpoch,
+          usuarioId: usuarioId,
+          codigoLinha: codigoLinha,
+          letreiro: letreiro,
+          sentido: sentido,
+          terminalOrigem: terminalOrigem,
+          terminalDestino: terminalDestino,
+          apelido: apelido,
+          criadoEm: DateTime.now().toIso8601String(),
+        );
+        _mockLinhasFavoritas.insert(0, novo);
+        return novo;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> removerLinhaFavorita(int id) async {
+    try {
+      final uri = Uri.parse('$baseUrl/linhas-favoritas/$id');
+      final response = await http.delete(uri, headers: _headers(includeAuth: true));
+
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception(_extractErrorMessage(response, 'Não foi possível remover a linha favorita.'));
+      }
+    } catch (e) {
+      if (_isConnectionError(e)) {
+        _mockLinhasFavoritas.removeWhere((l) => l.id == id);
+        return;
+      }
+      rethrow;
+    }
+  }
+
   String _extractErrorMessage(http.Response response, String fallback) {
     try {
       final body = jsonDecode(utf8.decode(response.bodyBytes));
